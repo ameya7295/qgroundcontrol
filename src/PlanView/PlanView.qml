@@ -60,12 +60,23 @@ Item {
     readonly property int       _layerRallyPoints:          3
     readonly property string    _armedVehicleUploadPrompt:  qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
 
-    function addComplexItem(complexItemName) {
+    function mapCenter() {
         var coordinate = editorMap.center
         coordinate.latitude  = coordinate.latitude.toFixed(_decimalPlaces)
         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
         coordinate.altitude  = coordinate.altitude.toFixed(_decimalPlaces)
-        insertComplexMissionItem(complexItemName, coordinate, _missionController.visualItems.count)
+        return coordinate
+    }
+
+    function addComplexItem(complexItemName) {
+        var next_index = _missionController.visualItemIndexFromSequenceNumber(_missionController.currentPlanViewIndex)+1
+        if(next_index ==1 && _missionController.visualItems.count >1){
+            console.log(next_index, _missionController.visualItems.count)
+            insertComplexMissionItem(complexItemName, mapCenter(), next_index+1)
+        }
+        else if(next_index <= _missionController.visualItems.count){
+            insertComplexMissionItem(complexItemName, mapCenter(), next_index)
+        }
     }
 
     function insertComplexMissionItem(complexItemName, coordinate, index) {
@@ -293,10 +304,8 @@ Item {
     ///     @param coordinate Location to insert item
     ///     @param index Insert item at this index
     function insertROIMissionItem(coordinate, index) {
-        var sequenceNumber = _missionController.insertROIMissionItem(coordinate, index)
-        _missionController.setCurrentPlanViewIndex(sequenceNumber, true)
+        _missionController.insertROIMissionItem(coordinate, index, true /* makeCurrentItem */)
         _addROIOnClick = false
-        toolStrip.lastClickedButton.checked = false
     }
 
     function selectNextNotReady() {
@@ -468,11 +477,19 @@ Item {
                     switch (_editingLayer) {
                     case _layerMission:
                         if (_addWaypointOnClick) {
-                            insertSimpleMissionItem(coordinate, _missionController.visualItems.count)
+                            var next_index = _missionController.visualItemIndexFromSequenceNumber(_missionController.currentPlanViewIndex)+1
+                            if(next_index ==1 && _missionController.visualItems.count >1){
+                                console.log(next_index, _missionController.visualItems.count)
+                                insertSimpleMissionItem(coordinate, next_index+1)
+                            }
+                            else if(next_index <= _missionController.visualItems.count){
+                                    insertSimpleMissionItem(coordinate, next_index)
+                            }
                         } else if (_addROIOnClick) {
                             _addROIOnClick = false
                             insertROIMissionItem(coordinate, _missionController.visualItems.count)
                         }
+
                         break
                     case _layerRallyPoints:
                         if (_rallyPointController.supported && _addWaypointOnClick) {
@@ -515,6 +532,7 @@ Item {
                 anchorPoint.x:  sourceItem.width / 2
                 anchorPoint.y:  sourceItem.height / 2
                 z:              QGroundControl.zOrderWaypointLines + 1
+                visible:        _editingLayer == _layerMission
 
                 sourceItem: SplitIndicator {
                     onClicked:  insertSimpleMissionItem(splitSegmentItem.coordinate, _missionController.visualItemIndexFromSequenceNumber(_missionController.currentPlanViewIndex))
@@ -604,9 +622,17 @@ Item {
             z:                  QGroundControl.zOrderWidgets
             maxHeight:          mapScale.y - toolStrip.y
 
-            property int fileButtonIndex: 1
+            readonly property int flyButtonIndex:       0
+            readonly property int fileButtonIndex:      1
+            readonly property int takeoffButtonIndex:   2
+            readonly property int waypointButtonIndex:  3
+            readonly property int roiButtonIndex:       4
+            readonly property int patternButtonIndex:   5
+            readonly property int landButtonIndex:      6
+            readonly property int centerButtonIndex:    7
 
-            property bool _isRally:     _editingLayer == _layerRallyPoints
+            property bool _isRallyLayer:    _editingLayer == _layerRallyPoints
+            property bool _isMissionLayer:  _editingLayer == _layerMission
 
             model: [
                 {
@@ -625,10 +651,16 @@ Item {
                     dropPanelComponent: syncDropPanel
                 },
                 {
+                    name:               qsTr("Takeoff"),
+                    iconSource:         "/res/takeoff.svg",
+                    buttonEnabled:      _missionController.isInsertTakeoffValid,
+                    buttonVisible:      _isMissionLayer
+                },
+                {
                     name:               _editingLayer == _layerRallyPoints ? qsTr("Rally Point") : qsTr("Waypoint"),
                     iconSource:         "/qmlimages/MapAddMission.svg",
-                    buttonEnabled:      true,
-                    buttonVisible:      true,
+                    buttonEnabled:      _isRallyLayer ? true : _missionController.flyThroughCommandsAllowed,
+                    buttonVisible:      _isRallyLayer || _isMissionLayer,
                     toggle:             true,
                     checked:            _addWaypointOnClick
                 },
@@ -636,15 +668,21 @@ Item {
                     name:               qsTr("ROI"),
                     iconSource:         "/qmlimages/MapAddMission.svg",
                     buttonEnabled:      true,
-                    buttonVisible:      !_isRally && _waypointsOnlyMode,
+                    buttonVisible:      _isMissionLayer,
                     toggle:             true
                 },
                 {
                     name:               _singleComplexItem ? _missionController.complexMissionItemNames[0] : qsTr("Pattern"),
                     iconSource:         "/qmlimages/MapDrawShape.svg",
-                    buttonEnabled:      true,
-                    buttonVisible:      !_isRally,
+                    buttonEnabled:      _missionController.flyThroughCommandsAllowed,
+                    buttonVisible:      _isMissionLayer,
                     dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
+                },
+                {
+                    name:               _planMasterController.controllerVehicle.fixedWing ? qsTr("Land") : qsTr("Return"),
+                    iconSource:         "/res/rtl.svg",
+                    buttonEnabled:      _missionController.isInsertLandValid,
+                    buttonVisible:      _isMissionLayer
                 },
                 {
                     name:               qsTr("Center"),
@@ -655,32 +693,48 @@ Item {
                 }
             ]
 
+            function allAddClickBoolsOff() {
+                _addROIOnClick =        false
+                _addWaypointOnClick =   false
+            }
+
             onClicked: {
                 switch (index) {
-                case 0:
+                case flyButtonIndex:
                     mainWindow.showFlyView()
-                    break;
-                case 2:
-                    if(_addWaypointOnClick) {
-                        //-- Toggle it off
-                        _addWaypointOnClick = false
-                        _addROIOnClick = false
+                    break
+                case takeoffButtonIndex:
+                    allAddClickBoolsOff()
+                    _missionController.insertTakeoffItem(mapCenter(), _missionController.currentMissionIndex, true /* makeCurrentItem */)
+                    break
+                case waypointButtonIndex:
+                    if (_addWaypointOnClick) {
+                        allAddClickBoolsOff()
                         setChecked(index, false)
                     } else {
+                        allAddClickBoolsOff()
                         _addWaypointOnClick = checked
-                        _addROIOnClick = false
                     }
                     break
-                case 3:
+                case roiButtonIndex:
+                    allAddClickBoolsOff()
                     _addROIOnClick = checked
-                    _addWaypointOnClick = false
                     break
-                case 4:
+                case patternButtonIndex:
+                    allAddClickBoolsOff()
                     if (_singleComplexItem) {
                         addComplexItem(_missionController.complexMissionItemNames[0])
                     }
                     break
+                case landButtonIndex:
+                    allAddClickBoolsOff()
+                    _missionController.insertLandItem(mapCenter(), _missionController.currentMissionIndex, true /* makeCurrentItem */)
+                    break
                 }
+            }
+
+            onDropped: {
+                allAddClickBoolsOff()
             }
         }
 
@@ -993,25 +1047,6 @@ Item {
                     }
                 }
             }
-
-            Rectangle {
-                width:              parent.width * 0.8
-                height:             1
-                color:              qgcPal.text
-                opacity:            0.5
-                Layout.fillWidth:   true
-                Layout.columnSpan:  2
-            }
-
-            QGCButton {
-                text:               qsTr("Load KML/SHP...")
-                Layout.fillWidth:   true
-                enabled:            !_planMasterController.syncInProgress
-                onClicked: {
-                    _planMasterController.loadShapeFromSelectedFile()
-                    dropPanel.hide()
-                }
-            }
         } // Column
     }
 
@@ -1232,8 +1267,6 @@ Item {
                     }
                 }
             }
-
-
         }
     }
 }

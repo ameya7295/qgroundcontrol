@@ -47,6 +47,7 @@ Rectangle {
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _hamburgerSize:     commandPicker.height * 0.75
+    readonly property real  _trashSize:     commandPicker.height * 0.75
     readonly property bool  _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
 
     QGCPalette {
@@ -139,46 +140,6 @@ Rectangle {
             id: hamburgerMenu
 
             QGCMenuItem {
-                text:           qsTr("Insert waypoint")
-                onTriggered:    insertWaypoint()
-            }
-
-            QGCMenu {
-                id:         patternMenu
-                title:      qsTr("Insert pattern")
-                visible:    !_singleComplexItem
-
-                Instantiator {
-                    model: _missionController.complexMissionItemNames
-
-                    onObjectAdded:      patternMenu.insertItem(index, object)
-                    onObjectRemoved:    patternMenu.removeItem(object)
-
-                    QGCMenuItem {
-                        text:           modelData
-                        onTriggered:    insertComplexItem(modelData)
-                    }
-                }
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Insert ") + _missionController.complexMissionItemNames[0]
-                visible:        _singleComplexItem
-                onTriggered:    insertComplexItem(_missionController.complexMissionItemNames[0])
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Delete")
-                onTriggered:    remove()
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Change command...")
-                onTriggered:    commandPicker.clicked()
-                visible:        missionItem.isSimpleItem && !_waypointsOnlyMode
-            }
-
-            QGCMenuItem {
                 text:           qsTr("Edit position...")
                 visible:        missionItem.specifiesCoordinate
                 onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
@@ -260,14 +221,13 @@ Rectangle {
             QGCLabel { text: missionItem.commandName }
 
             QGCColoredImage {
-                height:             ScreenTools.implicitComboBoxHeight - (ScreenTools.comboBoxPadding * 2)
+                height:             ScreenTools.defaultFontPixelWidth
                 width:              height
-                sourceSize.height:  height
                 fillMode:           Image.PreserveAspectFit
                 smooth:             true
                 antialiasing:       true
                 color:              qgcPal.text
-                source:             "qrc:/qt-project.org/imports/QtQuick/Controls.2/images/double-arrow.png"
+                source:             "/qmlimages/arrow-down.png"
             }
         }
 
@@ -280,8 +240,9 @@ Rectangle {
             id: commandDialog
 
             MissionCommandDialog {
-                missionItem:    _root.missionItem
-                map:            _root.map
+                missionItem:                _root.missionItem
+                map:                        _root.map
+                flyThroughCommandsAllowed:  _missionController.flyThroughCommandsAllowed
             }
         }
 
@@ -291,7 +252,7 @@ Rectangle {
         id:                     commandLabel
         anchors.leftMargin:     ScreenTools.comboBoxPadding
         anchors.fill:           commandPicker
-        visible:                !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode
+        visible:                !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode || missionItem.isTakeoffItem
         verticalAlignment:      Text.AlignVCenter
         text:                   missionItem.commandName
         color:                  _outerTextColor
