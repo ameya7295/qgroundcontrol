@@ -1,13 +1,13 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-import QtQuick          2.11
+import QtQuick          2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts  1.11
 import QtQuick.Dialogs  1.3
@@ -19,13 +19,21 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Controllers           1.0
 
-Item {
-    id: toolBar
+Rectangle {
+    id:     _root
+    color:  qgcPal.toolbarBackground
 
-    Component.onCompleted: {
-        //-- TODO: Get this from the actual state
-        flyButton.checked = true
-    }
+    property int currentToolbar: flyViewToolbar
+
+    readonly property int flyViewToolbar:   0
+    readonly property int planViewToolbar:  1
+    readonly property int simpleToolbar:    2
+
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
+    property color  _mainStatusBGColor: qgcPal.brandingPurple
+
+    QGCPalette { id: qgcPal }
 
     /// Bottom single pixel divider
     Rectangle {
@@ -37,158 +45,65 @@ Item {
         visible:        qgcPal.globalTheme === QGCPalette.Light
     }
 
-    //-------------------------------------------------------------------------
-    // Easter egg mechanism
-    MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            _clickCount++
-            eggTimer.restart()
-            if (_clickCount == 5) {
-                if(!QGroundControl.corePlugin.showAdvancedUI) {
-                    advancedModeConfirmation.open()
-                } else {
-                    QGroundControl.corePlugin.showAdvancedUI = false
-                }
-            } else if (_clickCount == 7) {
-                QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-            }
-        }
+    Rectangle {
+        anchors.fill:   viewButtonRow
+        visible:        currentToolbar === flyViewToolbar
 
-        property int _clickCount: 0
-
-        Timer {
-            id:             eggTimer
-            interval:       1000
-            repeat:         false
-            onTriggered:    parent._clickCount = 0
-        }
-
-        MessageDialog {
-            id:                 advancedModeConfirmation
-            title:              qsTr("Advanced Mode")
-            text:               QGroundControl.corePlugin.showAdvancedUIMessage
-            standardButtons:    StandardButton.Yes | StandardButton.No
-            onYes: {
-                QGroundControl.corePlugin.showAdvancedUI = true
-                advancedModeConfirmation.close()
-            }
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0;                                     color: _mainStatusBGColor }
+            GradientStop { position: currentButton.x + currentButton.width; color: _mainStatusBGColor }
+            GradientStop { position: 1;                                     color: _root.color }
         }
     }
 
-    //-- Setup can be invoked from c++ side
-    Connections {
-        target: setupWindow
-        onVisibleChanged: {
-            if(setupWindow.visible) {
-                setupButton.checked = true
-            }
+    RowLayout {
+        id:                     viewButtonRow
+        anchors.bottomMargin:   1
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        spacing:                ScreenTools.defaultFontPixelWidth / 2
+
+        QGCToolBarButton {
+            id:                     currentButton
+            Layout.preferredHeight: viewButtonRow.height
+            icon.source:            "/res/QGCLogoFull"
+            logo:                   true
+            onClicked:              mainWindow.showToolSelectDialog()
+        }
+
+        MainStatusIndicator {
+            Layout.preferredHeight: viewButtonRow.height
+            visible:                currentToolbar === flyViewToolbar
+        }
+
+        QGCButton {
+            id:                 disconnectButton
+            text:               qsTr("Disconnect")
+            onClicked:          _activeVehicle.closeVehicle()
+            visible:            _activeVehicle && _communicationLost && currentToolbar === flyViewToolbar
         }
     }
 
     QGCFlickable {
-        anchors.fill:       parent
-        contentWidth:       toolbarRow.width
-        flickableDirection: Flickable.HorizontalFlick
+        id:                     toolsFlickable
+        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
+        anchors.left:           viewButtonRow.right
+        anchors.bottomMargin:   1
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        anchors.right:          parent.right
+        contentWidth:           indicatorLoader.x + indicatorLoader.width
+        flickableDirection:     Flickable.HorizontalFlick
 
-        RowLayout {
-            id:                     toolbarRow
-            anchors.bottomMargin:   1
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            spacing:                ScreenTools.defaultFontPixelWidth / 2
-
-            ButtonGroup {
-                buttons:            viewRow.children
-            }
-
-            //---------------------------------------------
-            // Toolbar Row
-            RowLayout {
-                id:                 viewRow
-                Layout.fillHeight:  true
-                spacing:            0
-
-                QGCToolBarButton {
-                    id:                 settingsButton
-                    Layout.fillHeight:  true
-                    icon.source:        "/res/QGCLogoWhite"
-                    logo:               true
-                    visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
-                    onClicked: {
-                        checked = true
-                        mainWindow.showSettingsView()
-                    }
-                }
-
-                QGCToolBarButton {
-                    id:                 setupButton
-                    Layout.fillHeight:  true
-                    icon.source:        "/qmlimages/Gears.svg"
-                    onClicked: {
-                        checked = true
-                        mainWindow.showSetupView()
-                    }
-                }
-
-                QGCToolBarButton {
-                    id:                 planButton
-                    Layout.fillHeight:  true
-                    icon.source:        "/qmlimages/Plan.svg"
-                    onClicked: {
-                        checked = true
-                        mainWindow.showPlanView()
-                    }
-                }
-
-                QGCToolBarButton {
-                    id:                 flyButton
-                    Layout.fillHeight:  true
-                    icon.source:        "/qmlimages/PaperPlane.svg"
-                    onClicked: {
-                        checked = true
-                        mainWindow.showFlyView()
-                    }
-                }
-
-                QGCToolBarButton {
-                    id:                 analyzeButton
-                    Layout.fillHeight:  true
-                    icon.source:        "/qmlimages/Analyze.svg"
-                    visible:            QGroundControl.corePlugin.showAdvancedUI
-                    onClicked: {
-                        checked = true
-                        mainWindow.showAnalyzeView()
-                    }
-                }
-
-                Item {
-                    Layout.fillHeight:  true
-                    width:              ScreenTools.defaultFontPixelWidth / 2
-                    visible:            activeVehicle
-                }
-
-                Rectangle {
-                    Layout.margins:     ScreenTools.defaultFontPixelHeight / 2
-                    Layout.fillHeight:  true
-                    width:              1
-                    color:              qgcPal.text
-                    visible:            activeVehicle
-                }
-
-                Item {
-                    Layout.fillHeight:  true
-                    width:              ScreenTools.defaultFontPixelWidth / 2
-                    visible:            activeVehicle
-                }
-            }
-
-            Loader {
-                id:                 toolbarIndicators
-                Layout.fillHeight:  true
-                source:             "/toolbar/MainToolBarIndicators.qml"
-                visible:            activeVehicle && !communicationLost
-            }
+        Loader {
+            id:                 indicatorLoader
+            anchors.left:       parent.left
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            source:             currentToolbar === flyViewToolbar ?
+                                    "qrc:/toolbar/MainToolBarIndicators.qml" :
+                                    (currentToolbar == planViewToolbar ? "qrc:/qml/PlanToolBarIndicators.qml" : "")
         }
     }
 
@@ -199,7 +114,7 @@ Item {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.66
-        visible:                activeVehicle && !communicationLost && x > (toolbarRow.x + toolbarRow.width + ScreenTools.defaultFontPixelWidth)
+        visible:                currentToolbar !== planViewToolbar && _activeVehicle && !_communicationLost && x > (toolsFlickable.x + toolsFlickable.contentWidth + ScreenTools.defaultFontPixelWidth)
         fillMode:               Image.PreserveAspectFit
         source:                 _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
         mipmap:                 true
@@ -210,29 +125,47 @@ Item {
         property string _userBrandImageOutdoor: QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor.value
         property bool   _userBrandingIndoor:    _userBrandImageIndoor.length != 0
         property bool   _userBrandingOutdoor:   _userBrandImageOutdoor.length != 0
-        property string _brandImageIndoor:      _userBrandingIndoor ?
-                                                    _userBrandImageIndoor : (_userBrandingOutdoor ?
-                                                        _userBrandImageOutdoor : (_corePluginBranding ?
-                                                            QGroundControl.corePlugin.brandImageIndoor : (activeVehicle ?
-                                                                activeVehicle.brandImageIndoor : ""
-                                                            )
-                                                        )
-                                                    )
-        property string _brandImageOutdoor:     _userBrandingOutdoor ?
-                                                    _userBrandImageOutdoor : (_userBrandingIndoor ?
-                                                        _userBrandImageIndoor : (_corePluginBranding ?
-                                                            QGroundControl.corePlugin.brandImageOutdoor : (activeVehicle ?
-                                                                activeVehicle.brandImageOutdoor : ""
-                                                            )
-                                                        )
-                                                    )
+        property string _brandImageIndoor:      brandImageIndoor()
+        property string _brandImageOutdoor:     brandImageOutdoor()
+
+        function brandImageIndoor() {
+            if (_userBrandingIndoor) {
+                return _userBrandImageIndoor
+            } else {
+                if (_userBrandingOutdoor) {
+                    return _userBrandingOutdoor
+                } else {
+                    if (_corePluginBranding) {
+                        return QGroundControl.corePlugin.brandImageIndoor
+                    } else {
+                        return _activeVehicle ? _activeVehicle.brandImageIndoor : ""
+                    }
+                }
+            }
+        }
+
+        function brandImageOutdoor() {
+            if (_userBrandingOutdoor) {
+                return _userBrandingOutdoor
+            } else {
+                if (_userBrandingIndoor) {
+                    return _userBrandingIndoor
+                } else {
+                    if (_corePluginBranding) {
+                        return QGroundControl.corePlugin.brandImageOutdoor
+                    } else {
+                        return _activeVehicle ? _activeVehicle.brandImageOutdoor : ""
+                    }
+                }
+            }
+        }
     }
 
     // Small parameter download progress bar
     Rectangle {
         anchors.bottom: parent.bottom
-        height:         toolBar.height * 0.05
-        width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * parent.width : 0
+        height:         _root.height * 0.05
+        width:          _activeVehicle ? _activeVehicle.parameterManager.loadProgress * parent.width : 0
         color:          qgcPal.colorGreen
         visible:        !largeProgressBar.visible
     }
@@ -247,7 +180,7 @@ Item {
         color:          qgcPal.window
         visible:        _showLargeProgress
 
-        property bool _initialDownloadComplete: activeVehicle ? activeVehicle.parameterManager.parametersReady : true
+        property bool _initialDownloadComplete: _activeVehicle ? _activeVehicle.parameterManager.parametersReady : true
         property bool _userHide:                false
         property bool _showLargeProgress:       !_initialDownloadComplete && !_userHide && qgcPal.globalTheme === QGCPalette.Light
 
@@ -259,7 +192,7 @@ Item {
         Rectangle {
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
-            width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * parent.width : 0
+            width:          _activeVehicle ? _activeVehicle.parameterManager.loadProgress * parent.width : 0
             color:          qgcPal.colorGreen
         }
 
@@ -283,48 +216,4 @@ Item {
             onClicked:      largeProgressBar._userHide = true
         }
     }
-
-
-    //-------------------------------------------------------------------------
-    //-- Waiting for a vehicle
-    QGCLabel {
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.right:          parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        text:                   qsTr("Waiting For Vehicle Connection")
-        font.pointSize:         ScreenTools.mediumFontPointSize
-        font.family:            ScreenTools.demiboldFontFamily
-        color:                  qgcPal.colorRed
-        visible:                !activeVehicle
-    }
-
-    //-------------------------------------------------------------------------
-    //-- Connection Status
-    Row {
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        anchors.right:          parent.right
-        layoutDirection:        Qt.RightToLeft
-        spacing:                ScreenTools.defaultFontPixelWidth
-        visible:                activeVehicle && communicationLost
-
-        QGCButton {
-            id:                     disconnectButton
-            anchors.verticalCenter: parent.verticalCenter
-            text:                   qsTr("Disconnect")
-            primary:                true
-            onClicked:              activeVehicle.disconnectInactiveVehicle()
-        }
-
-        QGCLabel {
-            id:                     connectionLost
-            anchors.verticalCenter: parent.verticalCenter
-            text:                   qsTr("COMMUNICATION LOST")
-            font.pointSize:         ScreenTools.largeFontPointSize
-            font.family:            ScreenTools.demiboldFontFamily
-            color:                  qgcPal.colorRed
-        }
-    }
-
 }

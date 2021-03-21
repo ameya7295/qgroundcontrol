@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -67,12 +67,6 @@ signals:
     void alertChanged       ();
 
 private:
-    /* According with Thomas Voß, we should be using 2 minutes for the time being
-    static constexpr qint64 expirationTimeoutMs = 5000; ///< timeout with no update in ms after which the vehicle is removed.
-                                                        ///< AirMap sends updates for each vehicle every second.
-    */
-    static constexpr qint64 expirationTimeoutMs = 120000;
-
     uint32_t        _icaoAddress;
     QString         _callsign;
     QGeoCoordinate  _coordinate;
@@ -81,6 +75,9 @@ private:
     bool            _alert;
 
     QElapsedTimer   _lastUpdateTimer;
+
+    static constexpr qint64 expirationTimeoutMs = 120000;   ///< timeout with no update in ms after which the vehicle is removed.
+                                                            ///< AirMap sends updates for each vehicle every second.
 };
 
 Q_DECLARE_METATYPE(ADSBVehicle::VehicleInfo_t)

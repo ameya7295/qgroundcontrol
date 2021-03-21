@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2017 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -71,7 +71,7 @@ Item {
                         visible: QGroundControl.gpsRtk.currentAccuracy.value > 0
                         }
                     QGCLabel {
-                        text: QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.appSettingsDistanceUnitsString
+                        text: QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
                         visible: QGroundControl.gpsRtk.currentAccuracy.value > 0
                         }
                     QGCLabel { text: qsTr("Satellites:") }
@@ -109,7 +109,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            mainWindow.showPopUp(_root, gpsInfo)
+            mainWindow.showIndicatorPopup(_root, gpsInfo)
         }
     }
 }

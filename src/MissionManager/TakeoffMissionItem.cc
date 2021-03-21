@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -18,27 +18,29 @@
 #include "MissionCommandUIInfo.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "PlanMasterController.h"
 
-TakeoffMissionItem::TakeoffMissionItem(Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (vehicle, flyView, parent)
+TakeoffMissionItem::TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad, QObject* parent)
+    : SimpleMissionItem (masterController, flyView, forLoad, parent)
     , _settingsItem     (settingsItem)
 {
-    _init();
+    _init(forLoad);
 }
 
-TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (vehicle, flyView, parent)
+TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
+    : SimpleMissionItem (masterController, flyView, false /* forLoad */, parent)
     , _settingsItem     (settingsItem)
 {
     setCommand(takeoffCmd);
-    _init();
+    _init(false /* forLoad */);
 }
 
-TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (vehicle, flyView, missionItem, parent)
+TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
+    : SimpleMissionItem (masterController, flyView, missionItem, parent)
     , _settingsItem     (settingsItem)
 {
-    _init();
+    _init(false /* forLoad */);
+    _wizardMode = false;
 }
 
 TakeoffMissionItem::~TakeoffMissionItem()
@@ -46,7 +48,7 @@ TakeoffMissionItem::~TakeoffMissionItem()
 
 }
 
-void TakeoffMissionItem::_init(void)
+void TakeoffMissionItem::_init(bool forLoad)
 {
     _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
 
@@ -68,10 +70,15 @@ void TakeoffMissionItem::_init(void)
         }
     }
 
+    if (forLoad) {
+        // Load routines will set the rest up after load
+        return;
+    }
+
     _initLaunchTakeoffAtSameLocation();
 
     if (homePosition.isValid() && coordinate().isValid()) {
-        // Item already full specified, most likely from mission load from storage
+        // Item already fully specified, most likely from mission load from storage
         _wizardMode = false;
     } else {
         if (_launchTakeoffAtSameLocation && homePosition.isValid()) {
@@ -109,16 +116,16 @@ void TakeoffMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 
 bool TakeoffMissionItem::isTakeoffCommand(MAV_CMD command)
 {
-    return command == MAV_CMD_NAV_TAKEOFF || command == MAV_CMD_NAV_VTOL_TAKEOFF;
+    return qgcApp()->toolbox()->missionCommandTree()->isTakeoffCommand(command);
 }
 
 void TakeoffMissionItem::_initLaunchTakeoffAtSameLocation(void)
 {
     if (specifiesCoordinate()) {
-        if (_vehicle->fixedWing()) {
+        if (_controllerVehicle->fixedWing() || _controllerVehicle->vtol()) {
             setLaunchTakeoffAtSameLocation(false);
         } else {
-            // PX4 specifies a coordinate for takeoff even for non fixed wing. But it makes more sense to not have a coordinate
+            // PX4 specifies a coordinate for takeoff even for multi-rotor. But it makes more sense to not have a coordinate
             // from and end user standpoint. So even for PX4 we try to keep launch and takeoff at the same position. Unless the
             // user has moved/loaded launch at a different location than takeoff.
             if (coordinate().isValid() && _settingsItem->coordinate().isValid()) {
@@ -139,6 +146,7 @@ bool TakeoffMissionItem::load(QTextStream &loadStream)
     if (success) {
         _initLaunchTakeoffAtSameLocation();
     }
+    _wizardMode = false; // Always be off for loaded items
     return success;
 }
 
@@ -148,6 +156,7 @@ bool TakeoffMissionItem::load(const QJsonObject& json, int sequenceNumber, QStri
     if (success) {
         _initLaunchTakeoffAtSameLocation();
     }
+    _wizardMode = false; // Always be off for loaded items
     return success;
 }
 
@@ -164,16 +173,18 @@ void TakeoffMissionItem::setLaunchCoordinate(const QGeoCoordinate& launchCoordin
         if (_launchTakeoffAtSameLocation) {
             takeoffCoordinate = launchCoordinate;
         } else {
-            double altitude = this->altitude()->rawValue().toDouble();
-            double distance = 0.0;
+            double distance = qgcApp()->toolbox()->settingsManager()->planViewSettings()->vtolTransitionDistance()->rawValue().toDouble(); // Default distance is VTOL transition to takeoff point distance
+            if (_controllerVehicle->fixedWing()) {
+                double altitude = this->altitude()->rawValue().toDouble();
 
-            if (coordinateHasRelativeAltitude()) {
-                // Offset for fixed wing climb out of 30 degrees
-                if (altitude != 0.0) {
-                    distance = altitude / tan(qDegreesToRadians(30.0));
+                if (altitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative) {
+                    // Offset for fixed wing climb out of 30 degrees to specified altitude
+                    if (altitude != 0.0) {
+                        distance = altitude / tan(qDegreesToRadians(30.0));
+                    }
+                } else {
+                    distance = altitude * 1.5;
                 }
-            } else {
-                distance = altitude * 1.5;
             }
             takeoffCoordinate = launchCoordinate.atDistanceAndAzimuth(distance, 0);
         }

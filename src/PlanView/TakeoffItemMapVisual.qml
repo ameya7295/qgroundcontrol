@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -24,6 +24,7 @@ Item {
 
     property var map        ///< Map control to place item in
     property var vehicle    ///< Vehicle associated with this item
+    property bool interactive: true
 
     property var    _missionItem:           object
     property var    _takeoffIndicatorItem
@@ -78,6 +79,7 @@ Item {
             mapControl:     _root.map
             itemIndicator:  _takeoffIndicatorItem
             itemCoordinate: _missionItem.specifiesCoordinate ? _missionItem.coordinate : _missionItem.launchCoordinate
+            visible:        _root.interactive
 
             onItemCoordinateChanged: {
                 if (_missionItem.specifiesCoordinate) {
@@ -96,7 +98,7 @@ Item {
             mapControl:     _root.map
             itemIndicator:  _launchIndicatorItem
             itemCoordinate: _missionItem.launchCoordinate
-            visible:        !_missionItem.launchTakeoffAtSameLocation
+            visible:        !_missionItem.launchTakeoffAtSameLocation && _root.interactive
 
             onItemCoordinateChanged: _missionItem.launchCoordinate = itemCoordinate
         }
@@ -111,6 +113,7 @@ Item {
             missionItem:    _missionItem
             sequenceNumber: _missionItem.sequenceNumber
             onClicked:      _root.clicked(_missionItem.sequenceNumber)
+            opacity:        _root.opacity
         }
     }
 
@@ -121,7 +124,7 @@ Item {
             coordinate:     _missionItem.launchCoordinate
             anchorPoint.x:  sourceItem.anchorPointX
             anchorPoint.y:  sourceItem.anchorPointY
-            visible:        !_missionItem.launchTakeoffAtSameLocation
+            visible:        !_missionItem.launchTakeoffAtSameLocation && _root.interactive
 
             sourceItem:
                 MissionItemIndexLabel {
@@ -129,6 +132,7 @@ Item {
                     label:              qsTr("Launch")
                     highlightSelected:  true
                     onClicked:          _root.clicked(_missionItem.sequenceNumber)
+                    visible:            _root.interactive
                 }
         }
     }
@@ -140,12 +144,11 @@ Item {
         MouseArea {
             anchors.fill:   map
             z:              QGroundControl.zOrderMapItems + 1   // Over item indicators
-            visible:        !_missionItem.launchCoordinate.isValid
+            visible:        !_missionItem.launchCoordinate.isValid && _root.interactive
 
             readonly property int   _decimalPlaces: 8
 
             onClicked: {
-                console.log("mousearea click")
                 var coordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                 coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                 coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)

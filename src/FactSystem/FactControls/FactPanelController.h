@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -57,11 +57,6 @@ private slots:
     void _checkForMissingParameters(void);
 
 private:
-    void _notifyPanelMissingParameter(const QString& missingParam);
-    void _notifyPanelErrorMsg(const QString& errorMsg);
-    void _showInternalError(const QString& errorMsg);
-
-    QStringList _delayedMissingParams;
     QStringList _missingParameterWaitList;
     QTimer      _missingParametersTimer;
 };

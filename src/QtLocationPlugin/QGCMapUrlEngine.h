@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -10,7 +10,7 @@
 
 /**
  *  @file
- *  @author Gus Grubba <mavlink@grubba.com>
+ *  @author Gus Grubba <gus@auterion.com>
  */
 
 #ifndef QGC_MAP_URL_ENGINE_H
@@ -24,7 +24,7 @@
 #include "MapboxMapProvider.h"
 #include "ElevationMapProvider.h"
 
-#define MAX_MAP_ZOOM (20.0)
+#define MAX_MAP_ZOOM (23.0)
 
 class UrlFactory : public QObject {
     Q_OBJECT
@@ -48,6 +48,7 @@ public:
 
     int getIdFromType(QString type);
     QString getTypeFromId(int id);
+    MapProvider* getMapProviderFromId(int id);
 
     QGCTileSet getTileCount(int zoom, double topleftLon, double topleftLat,
                             double bottomRightLon, double bottomRightLat,

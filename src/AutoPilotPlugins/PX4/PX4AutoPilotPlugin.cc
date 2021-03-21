@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -39,6 +39,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _powerComponent(nullptr)
     , _motorComponent(nullptr)
     , _tuningComponent(nullptr)
+    , _flightBehavior(nullptr)
     , _syslinkComponent(nullptr)
 {
     if (!vehicle) {
@@ -62,61 +63,65 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         if (_vehicle) {
             if (_vehicle->parameterManager()->parametersReady()) {
-                _airframeComponent = new AirframeComponent(_vehicle, this);
+                _airframeComponent = new AirframeComponent(_vehicle, this, this);
                 _airframeComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_airframeComponent)));
 
-                if (!_vehicle->hilMode()) {
-                    _sensorsComponent = new SensorsComponent(_vehicle, this);
-                    _sensorsComponent->setupTriggerSignals();
-                    _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
-                }
+                _sensorsComponent = new SensorsComponent(_vehicle, this, this);
+                _sensorsComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_sensorsComponent)));
 
-                _radioComponent = new PX4RadioComponent(_vehicle, this);
+                _radioComponent = new PX4RadioComponent(_vehicle, this, this);
                 _radioComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_radioComponent)));
 
-                _flightModesComponent = new FlightModesComponent(_vehicle, this);
+                _flightModesComponent = new FlightModesComponent(_vehicle, this, this);
                 _flightModesComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_flightModesComponent)));
 
-                _powerComponent = new PowerComponent(_vehicle, this);
+                _powerComponent = new PowerComponent(_vehicle, this, this);
                 _powerComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_powerComponent)));
 
-                _motorComponent = new MotorComponent(_vehicle, this);
+                _motorComponent = new MotorComponent(_vehicle, this, this);
                 _motorComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_motorComponent));
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_motorComponent)));
 
-                _safetyComponent = new SafetyComponent(_vehicle, this);
+                _safetyComponent = new SafetyComponent(_vehicle, this, this);
                 _safetyComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_safetyComponent)));
 
-                _tuningComponent = new PX4TuningComponent(_vehicle, this);
+                _tuningComponent = new PX4TuningComponent(_vehicle, this, this);
                 _tuningComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_tuningComponent)));
+
+                if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "SYS_VEHICLE_RESP")) {
+                    _flightBehavior = new PX4FlightBehavior(_vehicle, this, this);
+                    _flightBehavior->setupTriggerSignals();
+                    _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_flightBehavior)));
+                }
 
                 //-- Is there support for cameras?
                 if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "TRIG_MODE")) {
-                    _cameraComponent = new CameraComponent(_vehicle, this);
+                    _cameraComponent = new CameraComponent(_vehicle, this, this);
                     _cameraComponent->setupTriggerSignals();
-                    _components.append(QVariant::fromValue((VehicleComponent*)_cameraComponent));
+                    _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_cameraComponent)));
                 }
 
                 //-- Is there an ESP8266 Connected?
                 if(_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {
-                    _esp8266Component = new ESP8266Component(_vehicle, this);
+                    _esp8266Component = new ESP8266Component(_vehicle, this, this);
                     _esp8266Component->setupTriggerSignals();
-                    _components.append(QVariant::fromValue((VehicleComponent*)_esp8266Component));
+                    _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_esp8266Component)));
                 }
             } else {
                 qWarning() << "Call to vehicleCompenents prior to parametersReady";
             }
 
             if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "SLNK_RADIO_CHAN")) {
-                _syslinkComponent = new SyslinkComponent(_vehicle, this);
+                _syslinkComponent = new SyslinkComponent(_vehicle, this, this);
                 _syslinkComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_syslinkComponent));
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_syslinkComponent)));
             }
         } else {
             qWarning() << "Internal error";
@@ -134,7 +139,7 @@ void PX4AutoPilotPlugin::parametersReadyPreChecks(void)
     QString hitlParam("SYS_HITL");
     if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, hitlParam) &&
             _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, hitlParam)->rawValue().toBool()) {
-        qgcApp()->showMessage(tr("Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle."));
+        qgcApp()->showAppMessage(tr("Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle."));
     }
 }
 
@@ -151,7 +156,7 @@ QString PX4AutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
                 return _airframeComponent->name();
             } else if (_radioComponent && !_radioComponent->setupComplete()) {
                 return _radioComponent->name();
-            } else if (_sensorsComponent && !_vehicle->hilMode() && !_sensorsComponent->setupComplete()) {
+            } else if (_sensorsComponent && !_sensorsComponent->setupComplete()) {
                 return _sensorsComponent->name();
             }
         }

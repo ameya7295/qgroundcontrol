@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -29,6 +29,7 @@ Item {
     property var    mapPolygon                                  ///< QGCMapPolygon object
     property bool   interactive:        mapPolygon.interactive
     property color  interiorColor:      "transparent"
+    property color  altColor:           "transparent"
     property real   interiorOpacity:    1
     property int    borderWidth:        0
     property color  borderColor:        "black"
@@ -38,7 +39,6 @@ Item {
     property bool   _circleRadiusDrag:          false
     property var    _circleRadiusDragCoord:     QtPositioning.coordinate()
     property bool   _editCircleRadius:          false
-    property bool   _traceMode:                 false
     property string _instructionText:           _polygonToolsText
     property var    _savedVertices:             [ ]
     property bool   _savedCircleMode
@@ -70,10 +70,10 @@ Item {
         _objMgrEditingVisuals.destroyObjects()
     }
 
-
     function addToolbarVisuals() {
         if (_objMgrToolVisuals.empty) {
-            _objMgrToolVisuals.createObject(toolbarComponent, mapControl)
+            var toolbar = _objMgrToolVisuals.createObject(toolbarComponent, mapControl)
+            toolbar.z = QGroundControl.zOrderWidgets
         }
     }
 
@@ -110,17 +110,14 @@ Item {
         bottomLeftCoord =   centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180)
         bottomRightCoord =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180)
 
-        return [ topLeftCoord, topRightCoord, bottomRightCoord, bottomLeftCoord, centerCoord  ]
+        return [ topLeftCoord, topRightCoord, bottomRightCoord, bottomLeftCoord  ]
     }
 
     /// Reset polygon back to initial default
     function _resetPolygon() {
         mapPolygon.beginReset()
         mapPolygon.clear()
-        var initialVertices = defaultPolygonVertices()
-        for (var i=0; i<4; i++) {
-            mapPolygon.appendVertex(initialVertices[i])
-        }
+        mapPolygon.appendVertices(defaultPolygonVertices())
         mapPolygon.endReset()
         _circleMode = false
     }
@@ -148,7 +145,7 @@ Item {
         var width = initialVertices[0].distanceTo(initialVertices[1])
         var height = initialVertices[1].distanceTo(initialVertices[2])
         var radius = Math.min(width, height) / 2
-        var center = initialVertices[4]
+        var center = initialVertices[0].atDistanceAndAzimuth(width / 2, 90).atDistanceAndAzimuth(height / 2, 180)
         _createCircularPolygon(center, radius)
     }
 
@@ -157,7 +154,7 @@ Item {
             addEditingVisuals()
             addToolbarVisuals()
         } else {
-            _traceMode = false
+            mapPolygon.traceMode = false
             removeEditingVisuals()
             removeToolVisuals()
         }
@@ -183,16 +180,6 @@ Item {
 
     onInteractiveChanged: _handleInteractiveChanged()
 
-    on_TraceModeChanged: {
-        if (_traceMode) {
-            _instructionText = _traceText
-            _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
-        } else {
-            _instructionText = _polygonToolsText
-            _objMgrTraceVisuals.destroyObjects()
-        }
-    }
-
     on_CircleModeChanged: {
         if (_circleMode) {
             addCircleVisuals()
@@ -201,10 +188,24 @@ Item {
         }
     }
 
+    Connections {
+        target: mapPolygon
+        onTraceModeChanged: {
+            if (mapPolygon.traceMode) {
+                _instructionText = _traceText
+                _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
+            } else {
+                _instructionText = _polygonToolsText
+                _objMgrTraceVisuals.destroyObjects()
+            }
+        }
+    }
+
     Component.onCompleted: {
         addCommonVisuals()
         _handleInteractiveChanged()
     }
+    Component.onDestruction: mapPolygon.traceMode = false
 
     QGCDynamicObjectManager { id: _objMgrCommonVisuals }
     QGCDynamicObjectManager { id: _objMgrToolVisuals }
@@ -279,7 +280,7 @@ Item {
         id: polygonComponent
 
         MapPolygon {
-            color:          interiorColor
+            color:          mapPolygon.showAltColor ? altColor : interiorColor
             opacity:        interiorOpacity
             border.color:   borderColor
             border.width:   borderWidth
@@ -300,7 +301,7 @@ Item {
 
             sourceItem: SplitIndicator {
                 z:          _zorderSplitHandle
-                onClicked:  mapPolygon.splitPolygonSegment(mapQuickItem.vertexIndex)
+                onClicked:  if(_root.interactive) mapPolygon.splitPolygonSegment(mapQuickItem.vertexIndex)
             }
         }
     }
@@ -365,7 +366,7 @@ Item {
                 }
             }
 
-            onClicked: menu.popupVertex(polygonVertex)
+            onClicked: if(_root.interactive) menu.popupVertex(polygonVertex)
         }
     }
 
@@ -520,36 +521,35 @@ Item {
             anchors.horizontalCenter:       mapControl.left
             anchors.horizontalCenterOffset: mapControl.centerViewport.left + (mapControl.centerViewport.width / 2)
             y:                              mapControl.centerViewport.top
-            z:                              QGroundControl.zOrderMapItems + 2
             availableWidth:                 mapControl.centerViewport.width
 
             QGCButton {
                 _horizontalPadding: 0
                 text:               qsTr("Basic")
-                visible:            !_traceMode
+                visible:            !mapPolygon.traceMode
                 onClicked:          _resetPolygon()
             }
 
             QGCButton {
                 _horizontalPadding: 0
                 text:               qsTr("Circular")
-                visible:            !_traceMode
+                visible:            !mapPolygon.traceMode
                 onClicked:          _resetCircle()
             }
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace")
+                text:               mapPolygon.traceMode ? qsTr("Done Tracing") : qsTr("Trace")
                 onClicked: {
-                    if (_traceMode) {
+                    if (mapPolygon.traceMode) {
                         if (mapPolygon.count < 3) {
                             _restorePreviousVertices()
                         }
-                        _traceMode = false
+                        mapPolygon.traceMode = false
                     } else {
                         _saveCurrentVertices()
                         _circleMode = false
-                        _traceMode = true
+                        mapPolygon.traceMode = true
                         mapPolygon.clear();
                     }
                 }
@@ -559,7 +559,7 @@ Item {
                 _horizontalPadding: 0
                 text:               qsTr("Load KML/SHP...")
                 onClicked:          kmlOrSHPLoadDialog.openForLoad()
-                visible:            !_traceMode
+                visible:            !mapPolygon.traceMode
             }
         }
     }
@@ -574,7 +574,7 @@ Item {
             z:                  QGroundControl.zOrderMapItems + 1   // Over item indicators
 
             onClicked: {
-                if (mouse.button === Qt.LeftButton) {
+                if (mouse.button === Qt.LeftButton && _root.interactive) {
                     mapPolygon.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
                 }
             }
@@ -596,7 +596,7 @@ Item {
                 height:     width
                 radius:     width / 2
                 color:      "white"
-                opacity:    .90
+                opacity:    interiorOpacity * .90
             }
         }
     }

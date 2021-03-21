@@ -1,6 +1,6 @@
  /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -98,6 +98,7 @@ void QGCToolbox::setChildToolboxes(void)
 {
     // SettingsManager must be first so settings are available to any subsequent tools
     _settingsManager->setToolbox(this);
+
     _corePlugin->setToolbox(this);
     _audioOutput->setToolbox(this);
     _factSystem->setToolbox(this);
@@ -134,13 +135,13 @@ void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)
 {
 #if defined (QGC_CUSTOM_BUILD)
     //-- Create custom plugin (Static)
-    _corePlugin = (QGCCorePlugin*) new CUSTOMCLASS(app, app->toolbox());
+    _corePlugin = (QGCCorePlugin*) new CUSTOMCLASS(app, this);
     if(_corePlugin) {
         return;
     }
 #endif
     //-- No plugins found, use default instance
-    _corePlugin = new QGCCorePlugin(app, app->toolbox());
+    _corePlugin = new QGCCorePlugin(app, this);
 }
 
 QGCTool::QGCTool(QGCApplication* app, QGCToolbox* toolbox)

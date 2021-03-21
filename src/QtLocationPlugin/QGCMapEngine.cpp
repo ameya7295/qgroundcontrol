@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,7 +12,7 @@
  * @file
  *   @brief Map Tile Cache
  *
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 #include "QGCApplication.h"
@@ -60,10 +60,8 @@ getQGCMapEngine()
 void
 destroyMapEngine()
 {
-    if(kMapEngine) {
-        delete kMapEngine;
-        kMapEngine = nullptr;
-    }
+    delete kMapEngine;
+    kMapEngine = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -105,8 +103,8 @@ QGCMapEngine::~QGCMapEngine()
 {
     _worker.quit();
     _worker.wait();
-    if(_urlFactory)
-        delete _urlFactory;
+    delete _urlFactory;
+    _urlFactory = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -224,7 +222,7 @@ QGCMapEngine::cacheTile(QString type, const QString& hash, const QByteArray& ima
 QString
 QGCMapEngine::getTileHash(QString type, int x, int y, int z)
 {
-    return QString().sprintf("%010d%08d%08d%03d", getQGCMapEngine()->urlFactory()->getIdFromType(type), x, y, z);
+    return QString::asprintf("%010d%08d%08d%03d", getQGCMapEngine()->urlFactory()->getIdFromType(type), x, y, z);
 }
 
 //-----------------------------------------------------------------------------
@@ -373,8 +371,8 @@ int
 QGCMapEngine::concurrentDownloads(QString type)
 {
     Q_UNUSED(type);
-    // TODO : We may want different values depending on 
-    // the provider here, let it like this as all provider are set to 12 
+    // TODO : We may want different values depending on
+    // the provider here, let it like this as all provider are set to 12
     // at the moment
     return 12;
 }
@@ -408,4 +406,3 @@ QGCMapEngine::_internetStatus(bool active)
 }
 
 // Resolution math: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
-

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -29,7 +29,7 @@ QGCComboBox {
     property bool showIndicator: _multipleVehicles
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _multipleVehicles:  _activeVehicle ? QGroundControl.multiVehicleManager.vehicles.count > 1 : false
+    property bool   _multipleVehicles:  QGroundControl.multiVehicleManager.vehicles.count > 1
     property var    _vehicleModel:      [ ]
 
     Connections {
@@ -37,7 +37,8 @@ QGCComboBox {
         onCountChanged:  _updateVehicleModel()
     }
 
-    Component.onCompleted: _updateVehicleModel()
+    Component.onCompleted:      _updateVehicleModel()
+    on_ActiveVehicleChanged:    _updateVehicleModel()
 
     function _updateVehicleModel() {
         var newCurrentIndex = -1

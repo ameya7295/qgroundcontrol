@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,7 +9,7 @@
 
 
 /// @file
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 #if !defined(__mobile__)
 //-- TODO: #include "QGCQFileDialog.h"
@@ -96,14 +96,14 @@ QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1,
 
 //-----------------------------------------------------------------------------
 QString
-QGCMapEngineManager::tileCountStr()
+QGCMapEngineManager::tileCountStr() const
 {
     return QGCMapEngine::numberToString(_imageSet.tileCount + _elevationSet.tileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCMapEngineManager::tileSizeStr()
+QGCMapEngineManager::tileSizeStr() const
 {
     return QGCMapEngine::bigSizeToString(_imageSet.tileSize + _elevationSet.tileSize);
 }
@@ -553,7 +553,7 @@ QGCMapEngineManager::getUniqueName()
     int count = 1;
     while (true) {
         name = test;
-        name += QString().sprintf("%03d", count++);
+        name += QString::asprintf("%03d", count++);
         if(!findName(name))
             return name;
     }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -211,7 +211,7 @@ SetupPage {
                                 QGCLabel {
                                     anchors.baseline:   optCombo.baseline
                                     text:               qsTr("Channel option %1 :").arg(index)
-                                    color:              controller.channelOptionEnabled[modelData] ? "yellow" : qgcPal.text
+                                    color:              controller.channelOptionEnabled[modelData + (_ch7OptAvailable ? 1 : 0)] ? "yellow" : qgcPal.text
                                 }
 
                                 FactComboBox {

@@ -52,6 +52,7 @@ import android.hardware.usb.UsbManager;
 import android.widget.Toast;
 import android.util.Log;
 import android.os.PowerManager;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.app.PendingIntent;
 import android.view.WindowManager;
@@ -76,7 +77,8 @@ public class QGCActivity extends QtActivity
     private static PendingIntent                        _usbPermissionIntent = null;
     private TaiSync                                     taiSync = null;
     private Timer                                       probeAccessoriesTimer = null;
-
+    private static WifiManager.MulticastLock            _wifiMulticastLock;
+    
     public static Context m_context;
 
     private final static ExecutorService m_Executor = Executors.newSingleThreadExecutor();
@@ -183,7 +185,7 @@ public class QGCActivity extends QtActivity
     public static native void qgcLogDebug(String message);
     public static native void qgcLogWarning(String message);
 
-    private static native void nativeInit();
+    public native void nativeInit();
 
     // QGCActivity singleton
     public QGCActivity()
@@ -198,6 +200,7 @@ public class QGCActivity extends QtActivity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        nativeInit();
         PowerManager pm = (PowerManager)_instance.getSystemService(Context.POWER_SERVICE);
         _wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
         if(_wakeLock != null) {
@@ -220,6 +223,18 @@ public class QGCActivity extends QtActivity
 
         // Create intent for usb permission request
         _usbPermissionIntent = PendingIntent.getBroadcast(_instance, 0, new Intent(ACTION_USB_PERMISSION), 0);
+
+	// Workaround for QTBUG-73138
+	if (_wifiMulticastLock == null)
+            {
+                WifiManager wifi = (WifiManager) _instance.getSystemService(Context.WIFI_SERVICE);
+                _wifiMulticastLock = wifi.createMulticastLock("QGroundControl");
+                _wifiMulticastLock.setReferenceCounted(true);
+            }
+
+	_wifiMulticastLock.acquire();
+	Log.d(TAG, "Multicast lock: " + _wifiMulticastLock.toString());
+
 
         try {
             taiSync = new TaiSync();
@@ -258,6 +273,10 @@ public class QGCActivity extends QtActivity
         }
         unregisterReceiver(mOpenAccessoryReceiver);
         try {
+            if (_wifiMulticastLock != null) {
+                _wifiMulticastLock.release();
+                Log.d(TAG, "Multicast lock released.");
+            }
             if(_wakeLock != null) {
                 _wakeLock.release();
             }
@@ -742,11 +761,6 @@ public class QGCActivity extends QtActivity
                 }
             }
         }).start();
-    }
-
-    public void jniOnLoad()
-    {
-        nativeInit();
     }
 }
 

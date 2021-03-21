@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -89,44 +89,6 @@ Item {
                         visible: parent.hasStickPositions
                         x:      (parent.width  * controller.stickPositions[2]) - (width  * 0.5)
                         y:      (parent.height * controller.stickPositions[3]) - (height * 0.5)
-                    }
-                    //---------------------------------------------------------
-                    //-- Gimbal Pitch
-                    Rectangle {
-                        width:      ScreenTools.defaultFontPixelWidth * 0.125
-                        height:     parent.height * 0.2
-                        color:      qgcPal.text
-                        visible:    controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
-                        x:          (parent.width  * 0.5) - (width  * 0.5)
-                        y:          (parent.height * 0.5) - (height * 0.5)
-                    }
-                    Rectangle {
-                        color:      qgcPal.colorGreen
-                        width:      parent.width * 0.035
-                        height:     width
-                        radius:     width * 0.5
-                        visible:    controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
-                        x:          (parent.width  * controller.gimbalPositions[0]) - (width  * 0.5)
-                        y:          (parent.height * controller.gimbalPositions[1]) - (height * 0.5)
-                    }
-                    //---------------------------------------------------------
-                    //-- Gimbal Yaw
-                    Rectangle {
-                        width:      parent.width * 0.2
-                        height:     ScreenTools.defaultFontPixelWidth * 0.125
-                        color:      qgcPal.text
-                        visible:    controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
-                        x:          (parent.width  * 0.5) - (width  * 0.5)
-                        y:          (parent.height * 0.3) - (height * 0.5)
-                    }
-                    Rectangle {
-                        color:      qgcPal.colorGreen
-                        width:      parent.width * 0.035
-                        height:     width
-                        radius:     width * 0.5
-                        visible:    controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
-                        x:          (parent.width  * controller.gimbalPositions[2]) - (width  * 0.5)
-                        y:          (parent.height * controller.gimbalPositions[3]) - (height * 0.5)
                     }
                 }
             }

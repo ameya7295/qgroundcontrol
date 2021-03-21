@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,82 +17,88 @@ import QGroundControl.Controls      1.0
 
 Rectangle {
     id:         _root
-    color:      qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
+    color:      qgcPal.toolbarBackground
     width:      _idealWidth < repeater.contentWidth ? repeater.contentWidth : _idealWidth
-    height:     toolStripColumn.height + (toolStripColumn.anchors.margins * 2)
+    height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
     radius:     ScreenTools.defaultFontPixelWidth / 2
 
     property alias  model:              repeater.model
     property real   maxHeight           ///< Maximum height for control, determines whether text is hidden to make control shorter
+    property alias  title:              titleLabel.text
 
-    property AbstractButton lastClickedButton: null
+    property var _dropPanel: dropPanel
 
     function simulateClick(buttonIndex) {
-        toolStripColumn.children[buttonIndex].checked = true
-        toolStripColumn.children[buttonIndex].clicked()
+        buttonIndex = buttonIndex + 1 // skip over title label
+        var button = toolStripColumn.children[buttonIndex]
+        if (button.checkable) {
+            button.checked = !button.checked
+        }
+        button.clicked()
     }
 
     // Ensure we don't get narrower than content
     property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 8) + toolStripColumn.anchors.margins * 2
 
-    signal clicked(int index, bool checked)
     signal dropped(int index)
 
-    function setChecked(idx, check) {
-        repeater.itemAt(idx).checked = check
+    DeadMouseArea {
+        anchors.fill: parent
     }
 
-    function getChecked(idx) {
-        return repeater.itemAt(idx).checked
-    }
-
-    ButtonGroup {
-        id:         buttonGroup
-        buttons:    toolStripColumn.children
-    }
-
-    Column {
-        id:                 toolStripColumn
+    QGCFlickable {
+        id:                 flickable
         anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.4
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
-        spacing:            ScreenTools.defaultFontPixelWidth * 0.25
+        height:             parent.height
+        contentHeight:      toolStripColumn.height
+        flickableDirection: Flickable.VerticalFlick
+        clip:               true
 
-        Repeater {
-            id: repeater
+        Column {
+            id:             toolStripColumn
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        ScreenTools.defaultFontPixelWidth * 0.25
 
-            QGCHoverButton {
-                id:             buttonTemplate
+            QGCLabel {
+                id:                     titleLabel
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.smallFontPointSize
+                visible:                title != ""
+            }
 
-                anchors.left:   toolStripColumn.left
-                anchors.right:  toolStripColumn.right
-                height:         width
-                radius:         ScreenTools.defaultFontPixelWidth / 2
-                fontPointSize:  ScreenTools.smallFontPointSize
-                autoExclusive:  true
+            Repeater {
+                id: repeater
 
-                enabled:        modelData.buttonEnabled
-                visible:        modelData.buttonVisible
-                imageSource:    modelData.showAlternateIcon ? modelData.alternateIconSource : modelData.iconSource
-                text:           modelData.name
-                checked:        modelData.checked !== undefined ? modelData.checked : checked
+                ToolStripHoverButton {
+                    id:                 buttonTemplate
+                    anchors.left:       toolStripColumn.left
+                    anchors.right:      toolStripColumn.right
+                    height:             width
+                    radius:             ScreenTools.defaultFontPixelWidth / 2
+                    fontPointSize:      ScreenTools.smallFontPointSize
+                    toolStripAction:    modelData
+                    dropPanel:          _dropPanel
+                    onDropped:          _root.dropped(index)
 
-                ButtonGroup.group: buttonGroup
-                // Only drop panel and toggleable are checkable
-                checkable: modelData.dropPanelComponent !== undefined || (modelData.toggle !== undefined && modelData.toggle)
-
-                onClicked: {
-                    dropPanel.hide()    // DropPanel will call hide on "lastClickedButton"
-                    if (modelData.dropPanelComponent === undefined) {
-                        _root.clicked(index, checked)
-                    } else if (checked) {
-                        var panelEdgeTopPoint = mapToItem(_root, width, 0)
-                        dropPanel.show(panelEdgeTopPoint, height, modelData.dropPanelComponent)
-                        _root.dropped(index)
+                    onCheckedChanged: {
+                        // We deal with exclusive check state manually since usinug autoExclusive caused all sorts of crazt problems
+                        if (checked) {
+                            for (var i=0; i<repeater.count; i++) {
+                                if (i != index) {
+                                    var button = repeater.itemAt(i)
+                                    if (button.checked) {
+                                        button.checked = false
+                                    }
+                                }
+                            }
+                        }
                     }
-                    if(_root && buttonTemplate)
-                        _root.lastClickedButton = buttonTemplate
                 }
             }
         }

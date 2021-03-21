@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -45,6 +45,9 @@ public:
     void        insert              (int i, QList<QObject*> objects);
     bool        contains            (QObject* object) { return _objectList.indexOf(object) != -1; }
     int         indexOf             (QObject* object) { return _objectList.indexOf(object); }
+
+    /// Moves an item to a new position
+    void move(int from, int to);
 
     QObject*    operator[]          (int i);
     const QObject* operator[]       (int i) const;

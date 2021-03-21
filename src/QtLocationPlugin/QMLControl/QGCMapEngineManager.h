@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,7 +9,7 @@
 
 
 /// @file
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 #ifndef OfflineMapsManager_H
 #define OfflineMapsManager_H
@@ -73,10 +73,10 @@ public:
     Q_INVOKABLE bool                importSets              (QString path = QString());
     Q_INVOKABLE void                resetAction             ();
 
-    quint64                         tileCount               () { return _imageSet.tileCount + _elevationSet.tileCount; }
-    QString                         tileCountStr            ();
-    quint64                         tileSize                () { return _imageSet.tileSize + _elevationSet.tileSize; }
-    QString                         tileSizeStr             ();
+    quint64                         tileCount               () const{ return _imageSet.tileCount + _elevationSet.tileCount; }
+    QString                         tileCountStr            () const;
+    quint64                         tileSize                () const{ return _imageSet.tileSize + _elevationSet.tileSize; }
+    QString                         tileSizeStr             () const;
     QStringList                     mapList                 ();
     QStringList                     mapProviderList         ();
     Q_INVOKABLE QStringList         mapTypeList             (QString provider);
@@ -84,13 +84,13 @@ public:
     quint32                         maxMemCache             ();
     quint32                         maxDiskCache            ();
     QString                         errorMessage            () { return _errorMessage; }
-    bool                            fetchElevation          () { return _fetchElevation; }
-    quint64                         freeDiskSpace           () { return _freeDiskSpace; }
-    quint64                         diskSpace               () { return _diskSpace; }
+    bool                            fetchElevation          () const{ return _fetchElevation; }
+    quint64                         freeDiskSpace           () const{ return _freeDiskSpace; }
+    quint64                         diskSpace               () const{ return _diskSpace; }
     int                             selectedCount           ();
-    int                             actionProgress          () { return _actionProgress; }
+    int                             actionProgress          () const{ return _actionProgress; }
     ImportAction                    importAction            () { return _importAction; }
-    bool                            importReplace           () { return _importReplace; }
+    bool                            importReplace           () const{ return _importReplace; }
 
     void                            setMaxMemCache          (quint32 size);
     void                            setMaxDiskCache         (quint32 size);

@@ -1,14 +1,15 @@
+################################################################################
+#
+# (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+#
+# QGroundControl is licensed according to the terms in the file
+# COPYING.md in the root of the source code directory.
+#
+################################################################################
 
 QT  += location-private positioning-private network
 
-contains(QT_VERSION, 5.5.1) {
-    message(Using Local QtLocation headers for Qt 5.5.1)
-    INCLUDEPATH += \
-        $$PWD/qtlocation/include \
-} else {
-    message(Using Default QtLocation headers)
-    INCLUDEPATH += $$QT.location.includes
-}
+INCLUDEPATH += $$QT.location.includes
 
 HEADERS += \
     $$PWD/QGCMapEngine.h \

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -44,6 +44,7 @@ void ADSBVehicleManager::_cleanupStaleVehicles()
         if (adsbVehicle->expired()) {
             qCDebug(ADSBVehicleManagerLog) << "Expired" << QStringLiteral("%1").arg(adsbVehicle->icaoAddress(), 0, 16);
             _adsbVehicles.removeAt(i);
+            _adsbICAOMap.remove(adsbVehicle->icaoAddress());
             adsbVehicle->deleteLater();
         }
     }
@@ -66,7 +67,7 @@ void ADSBVehicleManager::adsbVehicleUpdate(const ADSBVehicle::VehicleInfo_t vehi
 
 void ADSBVehicleManager::_tcpError(const QString errorMsg)
 {
-    qgcApp()->showMessage(tr("ADSB Server Error: %1").arg(errorMsg));
+    qgcApp()->showAppMessage(tr("ADSB Server Error: %1").arg(errorMsg));
 }
 
 
@@ -82,6 +83,7 @@ ADSBTCPLink::ADSBTCPLink(const QString& hostAddress, int port, QObject* parent)
 ADSBTCPLink::~ADSBTCPLink(void)
 {
     if (_socket) {
+        QObject::disconnect(_socket, &QTcpSocket::readyRead, this, &ADSBTCPLink::_readBytes);
         _socket->disconnectFromHost();
         _socket->deleteLater();
         _socket = nullptr;

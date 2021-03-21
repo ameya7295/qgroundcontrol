@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,6 +9,56 @@
 #pragma once
 
 #include "MapProvider.h"
+
+class JapanStdMapProvider : public MapProvider {
+    Q_OBJECT
+  public:
+    JapanStdMapProvider(QObject* parent = nullptr)
+        : MapProvider(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/std"), QStringLiteral("png"),
+                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+};
+
+class JapanSeamlessMapProvider : public MapProvider {
+    Q_OBJECT
+  public:
+    JapanSeamlessMapProvider(QObject* parent = nullptr)
+        : MapProvider(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto"), QStringLiteral("jpg"),
+                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+};
+
+class JapanAnaglyphMapProvider : public MapProvider {
+    Q_OBJECT
+  public:
+    JapanAnaglyphMapProvider(QObject* parent = nullptr)
+        : MapProvider(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/anaglyphmap_color"), QStringLiteral("png"),
+                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+};
+
+class JapanSlopeMapProvider : public MapProvider {
+    Q_OBJECT
+  public:
+    JapanSlopeMapProvider(QObject* parent = nullptr)
+        : MapProvider(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/slopemap"), QStringLiteral("png"),
+                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+};
+
+class JapanReliefMapProvider : public MapProvider {
+    Q_OBJECT
+  public:
+    JapanReliefMapProvider(QObject* parent = nullptr)
+        : MapProvider(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/relief"), QStringLiteral("png"),
+                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+};
 
 class StatkartMapProvider : public MapProvider {
     Q_OBJECT

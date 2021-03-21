@@ -1,19 +1,11 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
-
-
-/**
- * @file
- *   @brief Main executable
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
 
 #include <QtGlobal>
 #include <QApplication>
@@ -25,12 +17,18 @@
 #include <QUdpSocket>
 #include <QtPlugin>
 #include <QStringListModel>
+
+#include "QGC.h"
 #include "QGCApplication.h"
 #include "AppMessages.h"
+#include "SerialLink.h"
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
     #include "RunGuard.h"
+#ifndef NO_SERIAL_LINK
+    #include <QSerialPort>
+#endif
 #endif
 
 #ifdef UNITTEST_BUILD
@@ -137,7 +135,7 @@ static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 void setNativeMethods(void)
 {
     JNINativeMethod javaMethods[] {
-        {"nativeInit", "(Landroid/content/Context;)V", reinterpret_cast<void *>(gst_android_init)}
+        {"nativeInit", "()V", reinterpret_cast<void *>(gst_android_init)}
     };
 
     QAndroidJniEnvironment jniEnv;
@@ -175,12 +173,8 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return -1;
     }
-    setNativeMethods();
 
-    QAndroidJniObject resultL = QAndroidJniObject::callStaticObjectMethod(
-        kJniClassName,
-        "jniOnLoad",
-        "();");
+    setNativeMethods();
 
 #if defined(QGC_GST_STREAMING)
     // Tell the androidmedia plugin about the Java VM
@@ -190,7 +184,9 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
  #if !defined(NO_SERIAL_LINK)
     QSerialPort::setNativeMethods();
  #endif
+
     JoystickAndroid::setNativeMethods();
+
 #if defined(QGC_ENABLE_PAIRING)
     PairingManager::setNativeMethods();
 #endif
@@ -227,7 +223,14 @@ bool checkAndroidWritePermission() {
 int main(int argc, char *argv[])
 {
 #ifndef __mobile__
-    RunGuard guard("QGroundControlRunGuardKey");
+    // We make the runguard key different for custom and non custom
+    // builds, so they can be executed together in the same device.
+    // Stable and Daily have same QGC_APPLICATION_NAME so they would
+    // not be able to run at the same time
+    QString runguardString(QGC_APPLICATION_NAME);
+    runguardString.append("RunGuardKey");
+
+    RunGuard guard(runguardString);
     if (!guard.tryToRun()) {
         // QApplication is necessary to use QMessageBox
         QApplication errorApp(argc, argv);
@@ -237,6 +240,9 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
+
+    //-- Record boot time
+    QGC::initTimer();
 
 #ifdef Q_OS_UNIX
     //Force writing to the console on UNIX/BSD devices
@@ -251,7 +257,7 @@ int main(int argc, char *argv[])
 #ifndef __ios__
     // Prevent Apple's app nap from screwing us over
     // tip: the domain can be cross-checked on the command line with <defaults domains>
-    QProcess::execute("defaults write org.qgroundcontrol.qgroundcontrol NSAppSleepDisabled -bool YES");
+    QProcess::execute("defaults", {"write org.qgroundcontrol.qgroundcontrol NSAppSleepDisabled -bool YES"});
 #endif
 #endif
 
@@ -289,6 +295,8 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QGCSerialPortInfo>();
 #endif
 #endif
+
+    qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("Vehicle::MavCmdResultFailureCode_t");
 
     // We statically link our own QtLocation plugin
 

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -23,6 +23,7 @@
 #include "PowerComponent.h"
 #include "MotorComponent.h"
 #include "PX4TuningComponent.h"
+#include "PX4FlightBehavior.h"
 #include "SyslinkComponent.h"
 #include "Vehicle.h"
 
@@ -58,6 +59,7 @@ protected:
     PowerComponent*         _powerComponent;
     MotorComponent*         _motorComponent;
     PX4TuningComponent*     _tuningComponent;
+    PX4FlightBehavior*      _flightBehavior;
     SyslinkComponent*       _syslinkComponent;
 
 private:

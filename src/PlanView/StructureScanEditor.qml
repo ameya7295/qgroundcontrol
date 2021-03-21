@@ -69,15 +69,19 @@ Rectangle {
                 text:               qsTr("Use the Polygon Tools to create the polygon which outlines the structure.")
             }
 
+            /*
+              Trial of new "done" model so leaving for now in case it comes back
             QGCButton {
                 text:               qsTr("Done With Polygon")
                 Layout.fillWidth:   true
-                enabled:            missionItem.structurePolygon.isValid
+                enabled:            missionItem.structurePolygon.isValid && !missionItem.structurePolygon.traceMode
                 onClicked: {
                     missionItem.wizardMode = false
-                    editorRoot.selectNextNotReadyItem()
+                    // Trial of no auto select next item
+                    //editorRoot.selectNextNotReadyItem()
                 }
             }
+            */
         }
 
         Column {
@@ -217,13 +221,13 @@ Rectangle {
                     QGCLabel { text: missionItem.layers.valueString }
 
                     QGCLabel { text: qsTr("Layer Height") }
-                    QGCLabel { text: missionItem.cameraCalc.adjustedFootprintFrontal.valueString + " " + QGroundControl.appSettingsDistanceUnitsString }
+                    QGCLabel { text: missionItem.cameraCalc.adjustedFootprintFrontal.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString }
 
                     QGCLabel { text: qsTr("Top Layer Alt") }
-                    QGCLabel { text: QGroundControl.metersToAppSettingsDistanceUnits(missionItem.topFlightAlt).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString }
+                    QGCLabel { text: QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(missionItem.topFlightAlt).toFixed(1) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString }
 
                     QGCLabel { text: qsTr("Bottom Layer Alt") }
-                    QGCLabel { text: QGroundControl.metersToAppSettingsDistanceUnits(missionItem.bottomFlightAlt).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString }
+                    QGCLabel { text: QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(missionItem.bottomFlightAlt).toFixed(1) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString }
 
                     QGCLabel { text: qsTr("Photo Count") }
                     QGCLabel { text: missionItem.cameraShots }
@@ -232,7 +236,7 @@ Rectangle {
                     QGCLabel { text: missionItem.timeBetweenShots.toFixed(1) + " " + qsTr("secs") }
 
                     QGCLabel { text: qsTr("Trigger Distance") }
-                    QGCLabel { text: missionItem.cameraCalc.adjustedFootprintSide.valueString + " " + QGroundControl.appSettingsDistanceUnitsString }
+                    QGCLabel { text: missionItem.cameraCalc.adjustedFootprintSide.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString }
                 }
             } // Grid Column
 
@@ -243,12 +247,7 @@ Rectangle {
                 visible:            tabBar.currentIndex == 1
 
                 CameraCalcCamera {
-                    cameraCalc:                     missionItem.cameraCalc
-                    vehicleFlightIsFrontal:         false
-                    distanceToSurfaceLabel:         qsTr("Scan Distance")
-                    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
-                    frontalDistanceLabel:           qsTr("Layer Height")
-                    sideDistanceLabel:              qsTr("Trigger Distance")
+                    cameraCalc: missionItem.cameraCalc
                 }
             }
         }

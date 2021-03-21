@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -65,7 +65,7 @@ bool SensorsComponent::setupComplete(void) const
         return false;
     }
 
-    if (_vehicle->fixedWing() || _vehicle->vtol()) {
+    if (_vehicle->fixedWing() || _vehicle->vtol() || _vehicle->airship()) {
         if (!_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedDisabledParam)->rawValue().toBool() &&
                 _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedBreakerParam)->rawValue().toInt() != 162128 &&
                 _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedCalParam)->rawValue().toFloat() == 0.0f) {
@@ -81,7 +81,7 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
     QStringList triggers;
     
     triggers << _deviceIds << _magCalParam << _magEnabledParam;
-    if (_vehicle->fixedWing() || _vehicle->vtol()) {
+    if (_vehicle->fixedWing() || _vehicle->vtol() || _vehicle->airship()) {
         triggers << _airspeedCalParam << _airspeedBreakerParam;
     }
     
@@ -97,7 +97,7 @@ QUrl SensorsComponent::summaryQmlSource(void) const
 {
     QString summaryQml;
     
-    if (_vehicle->fixedWing() || _vehicle->vtol()) {
+    if (_vehicle->fixedWing() || _vehicle->vtol() || _vehicle->airship()) {
         summaryQml = "qrc:/qml/SensorsComponentSummaryFixedWing.qml";
     } else {
         summaryQml = "qrc:/qml/SensorsComponentSummary.qml";

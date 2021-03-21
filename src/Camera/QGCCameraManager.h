@@ -1,9 +1,13 @@
 /*!
  * @file
  *   @brief Camera Controller
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
+
+/// @file
+/// @brief  MAVLink Camera API. Camera Manager.
+/// @author Gus Grubba <gus@auterion.com>
 
 #pragma once
 
@@ -20,6 +24,7 @@ Q_DECLARE_LOGGING_CATEGORY(CameraManagerLog)
 class Joystick;
 
 //-----------------------------------------------------------------------------
+/// Camera Manager
 class QGCCameraManager : public QObject
 {
     Q_OBJECT
@@ -86,7 +91,7 @@ protected:
     class CameraStruct : public QObject {
     public:
         CameraStruct(QObject* parent, uint8_t compID_);
-        QTime   lastHeartbeat;
+        QElapsedTimer lastHeartbeat;
         bool    infoReceived = false;
         bool    gaveUp       = false;
         int     tryCount     = 0;
@@ -100,8 +105,8 @@ protected:
     QmlObjectListModel  _cameras;
     QStringList         _cameraLabels;
     int                 _currentCamera      = 0;
-    QTime               _lastZoomChange;
-    QTime               _lastCameraChange;
+    QElapsedTimer       _lastZoomChange;
+    QElapsedTimer       _lastCameraChange;
     QTimer              _cameraTimer;
     QMap<QString, CameraStruct*> _cameraInfoRequest;
 };

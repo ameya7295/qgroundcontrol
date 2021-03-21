@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2017 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -66,6 +66,8 @@ private:
     std::shared_ptr<airmap::qt::Logger>             _logger;
     std::shared_ptr<airmap::qt::DispatchingLogger>  _dispatchingLogger;
     AirspaceManager::AuthStatus                     _authStatus;
+    const std::string                               _telemetryHost = "telemetry.airmap.com";
+    const uint16_t                                  _telemetryPort = 16060;
 };
 
 

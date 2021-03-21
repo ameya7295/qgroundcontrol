@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2017 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -104,8 +104,8 @@ public:
     void                endFlight           (QString flightID) override;
 
 signals:
-    void            error                   (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
-    void            flightIDChanged         (QString flightID);
+    void error                              (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void flightIDChanged                    (QString flightID);
 
 private slots:
     void _pollBriefing                      ();
@@ -116,12 +116,12 @@ private slots:
     void _loadFlightList                    ();
 
 private:
-    void _createFlightPlan                  ();
-    bool _collectFlightDtata                ();
-    void _updateFlightPlan                  (bool interactive = false);
-    bool _findBriefFeature                  (const QString& name);
-    void _updateFlightStartEndTime          (airmap::DateTime& start_time, airmap::DateTime& end_time);
-    void _updateRulesAndFeatures            (std::vector<airmap::RuleSet::Id>& rulesets, std::unordered_map<std::string, airmap::RuleSet::Feature::Value>& features, bool updateFeatures = false);
+    void    _createFlightPlan               ();
+    bool    _collectFlightData              ();
+    void    _updateFlightPlan               (bool interactive = false);
+    bool    _findBriefFeature               (const QString& name);
+    void    _updateFlightStartEndTime       (airmap::DateTime& start_time, airmap::DateTime& end_time);
+    void    _updateRulesAndFeatures         (std::vector<airmap::RuleSet::Id>& rulesets, std::unordered_map<std::string, airmap::RuleSet::Feature::Value>& features, bool updateFeatures = false);
 
 private:
     enum class State {
@@ -139,11 +139,11 @@ private:
         QGCGeoBoundingCube bc;
         QList<QGeoCoordinate> coords;
         QGeoCoordinate  takeoffCoord;
-        float maxAltitude = 0;
+        float maxAltitudeAboveTakeoff = 0;
         void reset() {
             bc.reset();
             coords.clear();
-            maxAltitude = 0;
+            maxAltitudeAboveTakeoff = 0;
         }
     };
 

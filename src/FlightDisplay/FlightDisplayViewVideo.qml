@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -23,11 +23,13 @@ import QGroundControl.Controllers       1.0
 Item {
     id:     root
     clip:   true
+
+    property bool useSmallFont: true
+
     property double _ar:                QGroundControl.videoManager.aspectRatio
     property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
-    property var    _videoReceiver:     QGroundControl.videoManager.videoReceiver
-    property var    _dynamicCameras:    activeVehicle ? activeVehicle.dynamicCameras : null
-    property bool   _connected:         activeVehicle ? !activeVehicle.connectionLost : false
+    property var    _dynamicCameras:    globals.activeVehicle ? globals.activeVehicle.cameraManager : null
+    property bool   _connected:         globals.activeVehicle ? !globals.activeVehicle.communicationLost : false
     property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
     property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
@@ -40,25 +42,19 @@ Item {
         id:             noVideo
         anchors.fill:   parent
         color:          Qt.rgba(0,0,0,0.75)
-        visible:        !(_videoReceiver && _videoReceiver.videoRunning)
+        visible:        !(QGroundControl.videoManager.decoding)
         QGCLabel {
             text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
             font.family:        ScreenTools.demiboldFontFamily
             color:              "white"
-            font.pointSize:     mainIsMap ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
+            font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
             anchors.centerIn:   parent
-        }
-        MouseArea {
-            anchors.fill: parent
-            onDoubleClicked: {
-                QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
-            }
         }
     }
     Rectangle {
         anchors.fill:   parent
         color:          "black"
-        visible:        _videoReceiver && _videoReceiver.videoRunning
+        visible:        QGroundControl.videoManager.decoding
         function getWidth() {
             //-- Fit Width or Stretch
             if(_fitMode === 0 || _fitMode === 2) {
@@ -79,14 +75,13 @@ Item {
             id: videoBackgroundComponent
             QGCVideoBackground {
                 id:             videoContent
-                receiver:       _videoReceiver
-                display:        _videoReceiver && _videoReceiver.videoSurface
+                objectName:     "videoContent"
 
                 Connections {
-                    target:         _videoReceiver
+                    target: QGroundControl.videoManager
                     onImageFileChanged: {
                         videoContent.grabToImage(function(result) {
-                            if (!result.saveToFile(_videoReceiver.imageFile)) {
+                            if (!result.saveToFile(QGroundControl.videoManager.imageFile)) {
                                 console.error('Error capturing video frame');
                             }
                         });
@@ -125,13 +120,13 @@ Item {
         Loader {
             // GStreamer is causing crashes on Lenovo laptop OpenGL Intel drivers. In order to workaround this
             // we don't load a QGCVideoBackground object when video is disabled. This prevents any video rendering
-            // code from running. Setting QGCVideoBackground.receiver/display = null does not work to prevent any
+            // code from running. Setting QGCVideoBackground.receiver = null does not work to prevent any
             // video OpenGL from being generated. Hence the Loader to completely remove it.
             height:             parent.getHeight()
             width:              parent.getWidth()
             anchors.centerIn:   parent
-            visible:            _videoReceiver && _videoReceiver.videoRunning
-            sourceComponent:    videoDisabled ? null : videoBackgroundComponent
+            visible:            QGroundControl.videoManager.decoding
+            sourceComponent:    videoBackgroundComponent
 
             property bool videoDisabled: QGroundControl.settingsManager.videoSettings.videoSource.rawValue === QGroundControl.settingsManager.videoSettings.disabledVideoSource
         }
@@ -169,17 +164,10 @@ Item {
             }
             QGCVideoBackground {
                 id:             thermalVideo
+                objectName:     "thermalVideo"
                 anchors.fill:   parent
                 receiver:       QGroundControl.videoManager.thermalVideoReceiver
-                display:        QGroundControl.videoManager.thermalVideoReceiver ? QGroundControl.videoManager.thermalVideoReceiver.videoSurface : null
                 opacity:        _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
-            }
-        }
-        //-- Full screen toggle
-        MouseArea {
-            anchors.fill: parent
-            onDoubleClicked: {
-                QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
             }
         }
         //-- Zoom

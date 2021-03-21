@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -102,7 +102,7 @@ Item {
                                 QGCLabel {
                                     Layout.fillWidth:   true
                                     text:               qsTr("Flight Mode %1").arg(modelData + 1)
-                                    color:              controller.activeFlightMode == index ? "yellow" : qgcPal.text
+                                    color:              (controller.activeFlightMode - 1) == index ? "yellow" : qgcPal.text
                                 }
                             }
 

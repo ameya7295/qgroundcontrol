@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -130,8 +130,9 @@ SetupPage {
                         property Fact battMonitor:      controller.getParameterFact(-1, "BATT_MONITOR", false /* reportMissing */)
                         property Fact battVoltMult:     controller.getParameterFact(-1, "BATT_VOLT_MULT", false /* reportMissing */)
                         property Fact battVoltPin:      controller.getParameterFact(-1, "BATT_VOLT_PIN", false /* reportMissing */)
-                        property Fact vehicleVoltage:   controller.vehicle.battery.voltage
-                        property Fact vehicleCurrent:   controller.vehicle.battery.current
+                        property FactGroup  _batteryFactGroup:  controller.vehicle.getFactGroup("battery0")
+                        property Fact vehicleVoltage:   _batteryFactGroup.voltage
+                        property Fact vehicleCurrent:   _batteryFactGroup.current
                     }
                 }
             }
@@ -215,8 +216,9 @@ SetupPage {
                         property Fact battMonitor:      controller.getParameterFact(-1, "BATT2_MONITOR", false /* reportMissing */)
                         property Fact battVoltMult:     controller.getParameterFact(-1, "BATT2_VOLT_MULT", false /* reportMissing */)
                         property Fact battVoltPin:      controller.getParameterFact(-1, "BATT2_VOLT_PIN", false /* reportMissing */)
-                        property Fact vehicleVoltage:   controller.vehicle.battery2.voltage
-                        property Fact vehicleCurrent:   controller.vehicle.battery2.current
+                        property FactGroup  _batteryFactGroup:  controller.vehicle.getFactGroup("battery1")
+                        property Fact vehicleVoltage:   _batteryFactGroup.voltage
+                        property Fact vehicleCurrent:   _batteryFactGroup.current
                     }
                 }
             }
@@ -266,7 +268,7 @@ SetupPage {
                                     QGCLabel { text:   qsTr("- The arming tone will be played (if the vehicle has a buzzer attached)") }
                                     QGCLabel { text:   qsTr("- If using a flight controller with a safety button press it until it displays solid red") }
                                     QGCLabel { text:   qsTr("- You will hear a musical tone then two beeps") }
-                                    QGCLabel { text:   qsTr("- A few seconds later you should hear a number of beeps (one for each battery cell you’re using)") }
+                                    QGCLabel { text:   qsTr("- A few seconds later you should hear a number of beeps (one for each battery cell you're using)") }
                                     QGCLabel { text:   qsTr("- And finally a single long beep indicating the end points have been set and the ESC is calibrated") }
                                     QGCLabel { text:   qsTr("- Disconnect the battery and power up again normally") }
                                 }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2017 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -89,7 +89,7 @@ void
 AirMapManager::_error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails)
 {
     qCDebug(AirMapManagerLog) << "Error: "<<what<<", msg: "<<airmapdMessage<<", details: "<<airmapdDetails;
-    qgcApp()->showMessage(QString("Error: %1. %2").arg(what).arg(airmapdMessage));
+    qgcApp()->showAppMessage(QString("Error: %1. %2").arg(what).arg(airmapdMessage));
 }
 
 //-----------------------------------------------------------------------------
@@ -168,8 +168,8 @@ AirMapManager::_settingsTimeout()
         auto credentials    = Credentials{};
         credentials.api_key = _shared.settings().apiKey.toStdString();
         auto configuration  = Client::default_production_configuration(credentials);
-        configuration.telemetry.host = "udp.telemetry.k8s.airmap.io";
-        configuration.telemetry.port = 7070;
+        configuration.telemetry.host = _telemetryHost;
+        configuration.telemetry.port = _telemetryPort;
         qt::Client::create(configuration, _dispatchingLogger, this, [this](const qt::Client::CreateResult& result) {
             if (result) {
                 qCDebug(AirMapManagerLog) << "Successfully created airmap::qt::Client instance";

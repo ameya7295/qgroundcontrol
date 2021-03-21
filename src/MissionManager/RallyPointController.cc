@@ -1,15 +1,11 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
-
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
 
 #include "RallyPointController.h"
 #include "RallyPoint.h"
@@ -20,7 +16,6 @@
 #include "ParameterManager.h"
 #include "JsonHelper.h"
 #include "SimpleMissionItem.h"
-#include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "PlanMasterController.h"
@@ -34,15 +29,11 @@ const char* RallyPointController::_jsonFileTypeValue =  "RallyPoints";
 const char* RallyPointController::_jsonPointsKey =      "points";
 
 RallyPointController::RallyPointController(PlanMasterController* masterController, QObject* parent)
-    : PlanElementController(masterController, parent)
-    , _rallyPointManager(_managerVehicle->rallyPointManager())
-    , _dirty(false)
-    , _currentRallyPoint(nullptr)
-    , _itemsRequested(false)
+    : PlanElementController (masterController, parent)
+    , _managerVehicle               (masterController->managerVehicle())
+    , _rallyPointManager    (masterController->managerVehicle()->rallyPointManager())
 {
     connect(&_points, &QmlObjectListModel::countChanged, this, &RallyPointController::_updateContainsItems);
-
-    managerVehicleChanged(_managerVehicle);
 }
 
 RallyPointController::~RallyPointController()
@@ -50,7 +41,17 @@ RallyPointController::~RallyPointController()
 
 }
 
-void RallyPointController::managerVehicleChanged(Vehicle* managerVehicle)
+void RallyPointController::start(bool flyView)
+{
+    qCDebug(GeoFenceControllerLog) << "start flyView" << flyView;
+
+    _managerVehicleChanged(_masterController->managerVehicle());
+    connect(_masterController, &PlanMasterController::managerVehicleChanged, this, &RallyPointController::_managerVehicleChanged);
+
+    PlanElementController::start(flyView);
+}
+
+void RallyPointController::_managerVehicleChanged(Vehicle* managerVehicle)
 {
     if (_managerVehicle) {
         _rallyPointManager->disconnect(this);

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -19,6 +19,9 @@ public:
                     const QGeoMapType::MapStyle mapType, QObject* parent = nullptr);
 
     ~BingMapProvider() = default;
+
+    bool _isBingProvider() const override { return true; }
+
 
 protected:
     const QString _versionBingMaps = QStringLiteral("563");

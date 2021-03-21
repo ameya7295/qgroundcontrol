@@ -3,6 +3,8 @@
         <file alias="adsbVehicle.svg">src/FlightMap/Images/adsbVehicle.svg</file>
         <file alias="Airframe/AirframeSimulation">src/AutoPilotPlugins/Common/Images/AirframeSimulation.svg</file>
         <file alias="Airframe/AirframeUnknown">src/AutoPilotPlugins/Common/Images/AirframeUnknown.svg</file>
+        <file alias="Airframe/Airship">src/AutoPilotPlugins/Common/Images/Airship.svg</file>
+        <file alias="Airframe/Autogyro">src/AutoPilotPlugins/Common/Images/Autogyro.svg</file>
         <file alias="Airframe/Boat">src/AutoPilotPlugins/Common/Images/Boat.svg</file>
         <file alias="Airframe/FlyingWing">src/AutoPilotPlugins/Common/Images/FlyingWing.svg</file>
         <file alias="Airframe/Helicopter">src/AutoPilotPlugins/Common/Images/Helicopter.svg</file>
@@ -80,6 +82,7 @@
         <file alias="FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="FollowComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
         <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
+        <file alias="FloatingWindow.svg">src/AnalyzeView/FloatingWindow.svg</file>
         <file alias="Frames/BlueROV1.png">src/AutoPilotPlugins/APM/Images/bluerov-frame.png</file>
         <file alias="Frames/SimpleROV-3.png">src/AutoPilotPlugins/APM/Images/simple3-frame.png</file>
         <file alias="Frames/SimpleROV-4.png">src/AutoPilotPlugins/APM/Images/simple4-frame.png</file>
@@ -123,6 +126,10 @@
         <file alias="no-logging.svg">src/AutoPilotPlugins/PX4/Images/no-logging.svg</file>
         <file alias="ObjectAvoidance.svg">src/AutoPilotPlugins/PX4/Images/ObjectAvoidance.svg</file>
         <file alias="PaperPlane.svg">src/ui/toolbar/Images/PaperPlane.svg</file>
+        <file alias="PatternCamera.png">resources/PatternCamera.png</file>
+        <file alias="PatternGrid.png">resources/PatternGrid.png</file>
+        <file alias="PatternPresets.png">resources/PatternPresets.png</file>
+        <file alias="PatternTerrain.png">resources/PatternTerrain.png</file>
         <file alias="PiP.svg">src/FlightMap/Images/PiP.svg</file>
         <file alias="pipHide.svg">src/FlightMap/Images/pipHide.svg</file>
         <file alias="pipResize.svg">src/FlightMap/Images/pipResize.svg</file>
@@ -146,6 +153,7 @@
         <file alias="RCLossLight.svg">src/AutoPilotPlugins/PX4/Images/RCLossLight.svg</file>
         <file alias="ReturnToHomeAltitude.svg">src/AutoPilotPlugins/PX4/Images/ReturnToHomeAltitude.svg</file>
         <file alias="ReturnToHomeAltitudeCopter.svg">src/AutoPilotPlugins/PX4/Images/ReturnToHomeAltitudeCopter.svg</file>
+        <file alias="roi.svg">src/ui/toolbar/Images/roi.svg</file>
         <file alias="rollDialWhite.svg">src/FlightMap/Images/rollDialWhite.svg</file>
         <file alias="rollPointerWhite.svg">src/FlightMap/Images/rollPointerWhite.svg</file>
         <file alias="RTK.svg">src/ui/toolbar/Images/RTK.svg</file>
@@ -182,6 +190,7 @@
         <file alias="VehicleTailDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleTailDownRotate.png</file>
         <file alias="VehicleUpsideDown.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png</file>
         <file alias="VehicleUpsideDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDownRotate.png</file>
+        <file alias="VibrationPageIcon">src/AnalyzeView/VibrationPageIcon.png</file>
         <file alias="wifi.svg">src/AutoPilotPlugins/Common/Images/wifi.svg</file>
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>

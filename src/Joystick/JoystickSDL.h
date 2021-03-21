@@ -1,5 +1,16 @@
-#ifndef JOYSTICKSDL_H
-#define JOYSTICKSDL_H
+/****************************************************************************
+ *
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
+/// @file
+/// @brief SDL Joystick Interface
+
+#pragma once
 
 #include "Joystick.h"
 #include "Vehicle.h"
@@ -7,6 +18,7 @@
 
 #include <SDL.h>
 
+/// @brief SDL Joystick Interface
 class JoystickSDL : public Joystick
 {
 public:
@@ -15,7 +27,7 @@ public:
     static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager); 
     static bool init(void);
 
-    int index(void) { return _index; }
+    int index(void) const { return _index; }
     void setIndex(int index) { _index = index; }
 
     // This can be uncommented to hide the calibration buttons for gamecontrollers in the future
@@ -39,5 +51,3 @@ private:
     int     _index;      ///< Index for SDL_JoystickOpen
 
 };
-
-#endif // JOYSTICKSDL_H

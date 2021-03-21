@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -43,10 +43,10 @@ public:
     bool            available   () { return _distances.count() > 0; }
     bool            enabled     ();
     QList<int>      distances   () { return _distances; }
-    qreal           increment   () { return _increment; }
-    int             minDistance () { return _minDistance; }
-    int             maxDistance () { return _maxDistance; }
-    qreal           angleOffset () { return _angleOffset; }
+    qreal           increment   () const{ return _increment; }
+    int             minDistance () const{ return _minDistance; }
+    int             maxDistance () const{ return _maxDistance; }
+    qreal           angleOffset () const{ return _angleOffset; }
     int             gridSize    () { return _objGrid.count(); }
 
     void            update      (mavlink_obstacle_distance_t* message);

@@ -25,19 +25,22 @@ Canvas {
     property real   gimbalYaw
     property real   vehicleYaw
     property bool   showGimbalYaw:          false
+    property bool   showSequenceNumbers:    true
 
     property real   _width:             showGimbalYaw ? Math.max(_gimbalYawWidth, labelControl.visible ? labelControl.width : indicator.width) : (labelControl.visible ? labelControl.width : indicator.width)
     property real   _height:            showGimbalYaw ? _gimbalYawWidth : (labelControl.visible ? labelControl.height : indicator.height)
     property real   _gimbalYawRadius:   ScreenTools.defaultFontPixelHeight
     property real   _gimbalYawWidth:    _gimbalYawRadius * 2
-    property real   _smallRadius:       (ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio) / 2
-    property real   _normalRadius:      ScreenTools.defaultFontPixelHeight * 0.66
+    property real   _smallRadiusRaw:    Math.ceil((ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio) / 2)
+    property real   _smallRadius:       _smallRadiusRaw + ((_smallRadiusRaw % 2 == 0) ? 1 : 0) // odd number for better centering
+    property real   _normalRadiusRaw:   Math.ceil(ScreenTools.defaultFontPixelHeight * 0.66)
+    property real   _normalRadius:      _normalRadiusRaw + ((_normalRadiusRaw % 2 == 0) ? 1 : 0)
     property real   _indicatorRadius:   small ? _smallRadius : _normalRadius
     property real   _gimbalRadians:     degreesToRadians(vehicleYaw + gimbalYaw - 90)
     property real   _labelMargin:       2
     property real   _labelRadius:       _indicatorRadius + _labelMargin
     property string _label:             label.length > 1 ? label : ""
-    property string _index:             index === 0 || index === -1 ? label.charAt(0) : "" /*index*/
+    property string _index:             index === 0 || index === -1 ? label.charAt(0) : (showSequenceNumbers ? index : "")
 
     onColorChanged:         requestPaint()
     onShowGimbalYawChanged: requestPaint()
@@ -91,7 +94,7 @@ Canvas {
         anchors.left:           indicator.right
         anchors.top:            indicator.top
         anchors.bottom:         indicator.bottom
-        color:                  "white"
+        color:                  "black"
         text:                   _label
         verticalAlignment:      Text.AlignVCenter
         visible:                labelControl.visible

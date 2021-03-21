@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -111,12 +111,16 @@ void GoogleMapProvider::_tryCorrectGoogleVersions(QNetworkAccessManager* network
         const QString url = QStringLiteral("http://maps.google.com/maps/api/js?v=3.2&sensor=false");
         qheader.setUrl(QUrl(url));
         QByteArray ua;
-        ua.append(getQGCMapEngine()->userAgent());
+        ua.append(getQGCMapEngine()->userAgent().toLatin1());
         qheader.setRawHeader("User-Agent", ua);
         _googleReply = networkManager->get(qheader);
         connect(_googleReply, &QNetworkReply::finished, this, &GoogleMapProvider::_googleVersionCompleted);
         connect(_googleReply, &QNetworkReply::destroyed, this, &GoogleMapProvider::_replyDestroyed);
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
         connect(_googleReply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &GoogleMapProvider::_networkReplyError);
+#else
+        connect(_googleReply, &QNetworkReply::errorOccurred, this, &GoogleMapProvider::_networkReplyError);
+#endif
         networkManager->setProxy(proxy);
     }
 }

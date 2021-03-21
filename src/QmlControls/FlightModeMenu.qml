@@ -1,14 +1,14 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
+import QtQuick                      2.12
+import QtQuick.Controls             2.12
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -16,19 +16,21 @@ import QGroundControl.ScreenTools   1.0
 
 // Label control whichs pop up a flight mode change menu when clicked
 QGCLabel {
-    id:     flightModeMenuLabel
+    id:     _root
     text:   currentVehicle ? currentVehicle.flightMode : qsTr("N/A", "No data to display")
 
-    property var currentVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var    currentVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property real   mouseAreaLeftMargin:    0
 
-    QGCMenu {
+    Menu {
         id: flightModesMenu
     }
 
     Component {
         id: flightModeMenuItemComponent
 
-        QGCMenuItem {
+        MenuItem {
+            enabled: true
             onTriggered: currentVehicle.flightMode = text
         }
     }
@@ -52,16 +54,18 @@ QGCLabel {
         }
     }
 
-    Component.onCompleted: flightModeMenuLabel.updateFlightModesMenu()
+    Component.onCompleted: _root.updateFlightModesMenu()
 
     Connections {
         target:                 QGroundControl.multiVehicleManager
-        onActiveVehicleChanged: flightModeMenuLabel.updateFlightModesMenu()
+        onActiveVehicleChanged: _root.updateFlightModesMenu()
     }
 
     MouseArea {
-        visible:        currentVehicle && currentVehicle.flightModeSetAvailable
-        anchors.fill:   parent
-        onClicked:      flightModesMenu.popup()
+        id:                 mouseArea
+        visible:            currentVehicle && currentVehicle.flightModeSetAvailable
+        anchors.leftMargin: mouseAreaLeftMargin
+        anchors.fill:       parent
+        onClicked:          flightModesMenu.popup((_root.width - flightModesMenu.width) / 2, _root.height)
     }
 }

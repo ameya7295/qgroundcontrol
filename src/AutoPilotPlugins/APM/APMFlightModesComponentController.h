@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -81,7 +81,7 @@ private:
     QVariantList    _superSimpleModeEnabled;
 
     static const uint8_t    _allSimpleBits =    0x3F;
-    static const int        _cChannelOptions =  10;
+    static const int        _cChannelOptions =  11;
     static const int        _cSimpleModeBits =  8;
     static const int        _cFltModes =        6;
 

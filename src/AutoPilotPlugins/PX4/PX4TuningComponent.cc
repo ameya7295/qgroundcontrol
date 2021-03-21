@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -14,7 +14,7 @@
 
 PX4TuningComponent::PX4TuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)
-    , _name(tr("Tuning"))
+    , _name(tr("PID Tuning"))
 {
 }
 
@@ -25,7 +25,7 @@ QString PX4TuningComponent::name(void) const
 
 QString PX4TuningComponent::description(void) const
 {
-    return tr("Tuning Setup is used to tune the flight characteristics of the Vehicle.");
+    return tr("Tuning Setup is used to tune the flight controllers.");
 }
 
 QString PX4TuningComponent::iconResource(void) const
@@ -54,7 +54,7 @@ QUrl PX4TuningComponent::setupSource(void) const
 
     switch (_vehicle->vehicleType()) {
         case MAV_TYPE_FIXED_WING:
-            qmlFile = "qrc:/qml/PX4TuningComponentPlane.qml";
+            qmlFile = ""; // TODO: "qrc:/qml/PX4TuningComponentPlane.qml";
             break;
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_COAXIAL:

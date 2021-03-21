@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -87,10 +87,6 @@ int MapProvider::lat2tileY(const double lat, const int z) const {
         (1.0 -
          log(tan(lat * M_PI / 180.0) + 1.0 / cos(lat * M_PI / 180.0)) / M_PI) /
         2.0 * pow(2.0, z)));
-}
-
-bool MapProvider::_isElevationProvider() const {
-    return false;
 }
 
 QGCTileSet MapProvider::getTileCount(const int zoom, const double topleftLon,

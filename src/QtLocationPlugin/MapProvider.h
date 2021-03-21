@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -45,7 +45,8 @@ public:
 
     virtual int lat2tileY(const double lat, const int z) const;
 
-    virtual bool _isElevationProvider() const;
+    virtual bool _isElevationProvider() const { return false; }
+    virtual bool _isBingProvider() const { return false; }
 
     virtual QGCTileSet getTileCount(const int zoom, const double topleftLon,
                                      const double topleftLat, const double bottomRightLon,

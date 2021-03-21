@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,7 +12,7 @@
  * @file
  *   @brief Map Tile Cache Worker Thread
  *
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 
@@ -26,6 +26,7 @@
 #include <QDateTime>
 #include <QApplication>
 #include <QFile>
+#include <QSettings>
 
 #include "time.h"
 
@@ -120,6 +121,7 @@ QGCCacheWorker::run()
         _db->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
         _valid = _db->open();
     }
+    _deleteBingNoTileTiles();
     while(true) {
         QGCMapTask* task;
         if(_taskQueue.count()) {
@@ -203,6 +205,49 @@ QGCCacheWorker::run()
         QSqlDatabase::removeDatabase(kSession);
     }
 }
+
+//-----------------------------------------------------------------------------
+void
+QGCCacheWorker::_deleteBingNoTileTiles()
+{
+    QSettings settings;
+    static const char* alreadyDoneKey = "_deleteBingNoTileTilesDone";
+
+    if (settings.value(alreadyDoneKey, false).toBool()) {
+        return;
+    }
+    settings.setValue(alreadyDoneKey, true);
+
+    // Previously we would store these empty tile graphics in the cache. This prevented the ability to zoom beyong the level
+    // of available tiles. So we need to remove only of these still hanging around to make higher zoom levels work.
+    QFile file(":/res/BingNoTileBytes.dat");
+    file.open(QFile::ReadOnly);
+    QByteArray noTileBytes = file.readAll();
+    file.close();
+
+    QSqlQuery query(*_db);
+    QString s;
+    //-- Select tiles in default set only, sorted by oldest.
+    s = QString("SELECT tileID, tile, hash FROM Tiles WHERE LENGTH(tile) = %1").arg(noTileBytes.count());
+    QList<quint64> idsToDelete;
+    if (query.exec(s)) {
+        while(query.next()) {
+            if (query.value(1).toByteArray() == noTileBytes) {
+                idsToDelete.append(query.value(0).toULongLong());
+                qCDebug(QGCTileCacheLog) << "_deleteBingNoTileTiles HASH:" << query.value(2).toString();
+            }
+        }
+        for (const quint64 tileId: idsToDelete) {
+            s = QString("DELETE FROM Tiles WHERE tileID = %1").arg(tileId);
+            if (!query.exec(s)) {
+                qCWarning(QGCTileCacheLog) << "Delete failed";
+            }
+        }
+    } else {
+        qCWarning(QGCTileCacheLog) << "_deleteBingNoTileTiles query failed";
+    }
+}
+
 //-----------------------------------------------------------------------------
 bool
 QGCCacheWorker::_findTileSetID(const QString name, quint64& setID)
@@ -736,8 +781,7 @@ QGCCacheWorker::_importSets(QGCMapTask* mtask)
                                 int testCount = 0;
                                 //-- Set with this name already exists. Make name unique.
                                 while (true) {
-                                    QString testName;
-                                    testName.sprintf("%s %02d", name.toLatin1().data(), ++testCount);
+                                    auto testName = QString::asprintf("%s %02d", name.toLatin1().data(), ++testCount);
                                     if(!_findTileSetID(testName, insertSetID) || testCount > 99) {
                                         name = testName;
                                         break;
@@ -1017,6 +1061,8 @@ QGCCacheWorker::_createDB(QSqlDatabase* db, bool createDefault)
     {
         qWarning() << "Map Cache SQL error (create Tiles db):" << query.lastError().text();
     } else {
+        query.exec("CREATE INDEX IF NOT EXISTS hash ON Tiles ( hash, size, type ) ");
+             
         if(!query.exec(
             "CREATE TABLE IF NOT EXISTS TileSets ("
             "setID INTEGER PRIMARY KEY NOT NULL, "
@@ -1093,7 +1139,7 @@ QGCCacheWorker::_testInternet()
         To test if you have Internet connection, the code tests a connection to
         8.8.8.8:53 (google DNS). It appears that some routers are now blocking TCP
         connections to port 53. So instead, we use a TCP connection to "github.com"
-        (80). On exit, if the look up for “github.com” is under way, a call to abort
+        (80). On exit, if the look up for "github.com" is under way, a call to abort
         the lookup is made. This abort call on Android has no effect, and the code
         blocks for a full minute. So to work around the issue, we continue a direct
         TCP connection to 8.8.8.8:53 on Android and do the lookup/connect on the

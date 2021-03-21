@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -19,6 +19,4 @@ QGCFileDialog {
     title:          qsTr("Select Polygon File")
     selectExisting: true
     nameFilters:    ShapeFileHelper.fileDialogKMLOrSHPFilters
-    fileExtension:  QGroundControl.settingsManager.appSettings.kmlFileExtension
-    fileExtension2: QGroundControl.settingsManager.appSettings.shpFileExtension
 }

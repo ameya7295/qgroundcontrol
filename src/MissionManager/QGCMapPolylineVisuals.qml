@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -32,7 +32,6 @@ Item {
 
     property var    _dragHandlesComponent
     property var    _splitHandlesComponent
-    property bool   _traceMode:             false
     property string _instructionText:       _corridorToolsText
     property real   _zorderDragHandle:      QGroundControl.zOrderMapItems + 3   // Highest to prevent splitting when items overlap
     property real   _zorderSplitHandle:     QGroundControl.zOrderMapItems + 2
@@ -96,13 +95,16 @@ Item {
         }
     }
 
-    on_TraceModeChanged: {
-        if (_traceMode) {
-            _instructionText = _traceText
-            _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
-        } else {
-            _instructionText = _corridorToolsText
-            _objMgrTraceVisuals.destroyObjects()
+    Connections {
+        target: mapPolyline
+        onTraceModeChanged: {
+            if (mapPolyline.traceMode) {
+                _instructionText = _traceText
+                _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
+            } else {
+                _instructionText = _corridorToolsText
+                _objMgrTraceVisuals.destroyObjects()
+            }
         }
     }
 
@@ -112,6 +114,7 @@ Item {
             _addInteractiveVisuals()
         }
     }
+    Component.onDestruction: mapPolyline.traceMode = false
 
     QGCDynamicObjectManager { id: _objMgrCommonVisuals }
     QGCDynamicObjectManager { id: _objMgrInteractiveVisuals }
@@ -125,7 +128,6 @@ Item {
         title:          qsTr("Select KML File")
         selectExisting: true
         nameFilters:    ShapeFileHelper.fileDialogKMLFilters
-        fileExtension:  QGroundControl.settingsManager.appSettings.kmlFileExtension
 
         onAcceptedForLoad: {
             mapPolyline.loadKMLFile(file)
@@ -172,6 +174,7 @@ Item {
             line.color: lineColor
             path:       mapPolyline.path
             visible:    _root.visible
+            opacity:    _root.opacity
         }
     }
 
@@ -183,6 +186,7 @@ Item {
             anchorPoint.x:  sourceItem.width / 2
             anchorPoint.y:  sourceItem.height / 2
             z:              _zorderSplitHandle
+            opacity:        _root.opacity
 
             property int vertexIndex
 
@@ -201,6 +205,8 @@ Item {
             delegate: Item {
                 property var _splitHandle
                 property var _vertices:     mapPolyline.path
+
+                opacity:    _root.opacity
 
                 function _setHandlePosition() {
                     var nextIndex = index + 1
@@ -235,6 +241,7 @@ Item {
             mapControl: _root.mapControl
             id:         dragArea
             z:          _zorderDragHandle
+            opacity:    _root.opacity
 
             property int polylineVertex
 
@@ -264,6 +271,7 @@ Item {
             anchorPoint.x:  dragHandle.width / 2
             anchorPoint.y:  dragHandle.height / 2
             z:              _zorderDragHandle
+            opacity:        _root.opacity
 
             property int polylineVertex
 
@@ -288,6 +296,8 @@ Item {
 
             delegate: Item {
                 property var _visuals: [ ]
+
+                opacity:    _root.opacity
 
                 Component.onCompleted: {
                     var dragHandle = dragHandleComponent.createObject(mapControl)
@@ -323,22 +333,22 @@ Item {
             QGCButton {
                 _horizontalPadding: 0
                 text:               qsTr("Basic")
-                visible:            !_traceMode
+                visible:            !mapPolyline.traceMode
                 onClicked:          _resetPolyline()
             }
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace")
+                text:               mapPolyline.traceMode ? qsTr("Done Tracing") : qsTr("Trace")
                 onClicked: {
-                    if (_traceMode) {
+                    if (mapPolyline.traceMode) {
                         if (mapPolyline.count < 2) {
                             _restorePreviousVertices()
                         }
-                        _traceMode = false
+                        mapPolyline.traceMode = false
                     } else {
                         _saveCurrentVertices()
-                        _traceMode = true
+                        mapPolyline.traceMode = true
                         mapPolyline.clear();
                     }
                 }
@@ -348,7 +358,7 @@ Item {
                 _horizontalPadding: 0
                 text:               qsTr("Load KML...")
                 onClicked:          kmlLoadDialog.openForLoad()
-                visible:            !_traceMode
+                visible:            !mapPolyline.traceMode
             }
         }
     }
@@ -363,7 +373,7 @@ Item {
             z:                  QGroundControl.zOrderMapItems + 1   // Over item indicators
 
             onClicked: {
-                if (mouse.button === Qt.LeftButton) {
+                if (mouse.button === Qt.LeftButton && _root.interactive) {
                     mapPolyline.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
                 }
             }

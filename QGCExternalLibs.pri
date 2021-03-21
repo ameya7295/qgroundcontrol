@@ -1,8 +1,17 @@
+################################################################################
+#
+# (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+#
+# QGroundControl is licensed according to the terms in the file
+# COPYING.md in the root of the source code directory.
+#
+################################################################################
+
 #
 # [REQUIRED] Add support for <inttypes.h> to Windows.
 #
 WindowsBuild {
-    INCLUDEPATH += libs/lib/msinttypes
+    INCLUDEPATH += libs/msinttypes
 }
 
 #
@@ -36,7 +45,7 @@ isEmpty(MAVLINKPATH) {
         MAVLINKPATH     = $$fromfile(user_config.pri, MAVLINKPATH)
         message($$sprintf("Using user-supplied mavlink path '%1' specified in user_config.pri", $$MAVLINKPATH))
     } else {
-        MAVLINKPATH     = $$BASEDIR/$$MAVLINKPATH_REL
+        MAVLINKPATH     = $$SOURCE_DIR/$$MAVLINKPATH_REL
     }
 }
 
@@ -100,76 +109,86 @@ SOURCES += \
     libs/shapelib/safileio.c
 
 #
+# [REQUIRED] zlib library
+WindowsBuild {
+    INCLUDEPATH +=  $$SOURCE_DIR/libs/zlib/windows/include
+    LIBS += -L$$SOURCE_DIR/libs/zlib/windows/lib
+    LIBS += -lzlibstat
+} else {
+    LIBS += -lz
+}
+
+#
+# [REQUIRED] LZMA decompression library
+HEADERS+= \
+    libs/xz-embedded/linux/include/linux/xz.h \
+    libs/xz-embedded/linux/lib/xz/xz_lzma2.h \
+    libs/xz-embedded/linux/lib/xz/xz_private.h \
+    libs/xz-embedded/linux/lib/xz/xz_stream.h \
+    libs/xz-embedded/userspace/xz_config.h
+SOURCES += \
+    libs/xz-embedded/linux/lib/xz/xz_crc32.c \
+    libs/xz-embedded/linux/lib/xz/xz_crc64.c \
+    libs/xz-embedded/linux/lib/xz/xz_dec_lzma2.c \
+    libs/xz-embedded/linux/lib/xz/xz_dec_stream.c
+INCLUDEPATH += \
+    libs/xz-embedded/userspace \
+    libs/xz-embedded/linux/include/linux
+DEFINES += XZ_DEC_ANY_CHECK XZ_USE_CRC64
+
+#
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
 # The SDL is packaged with QGC for the Mac and Windows. Linux support requires installing the SDL
 # library (development libraries and static binaries).
 #
 MacBuild {
     INCLUDEPATH += \
-        $$BASEDIR/libs/lib/Frameworks/SDL2.framework/Headers
+        $$SOURCE_DIR/libs/Frameworks/SDL2.framework/Headers
     LIBS += \
-        -F$$BASEDIR/libs/lib/Frameworks \
+        -F$$SOURCE_DIR/libs/Frameworks \
         -framework SDL2
 } else:LinuxBuild {
     PKGCONFIG = sdl2
 } else:WindowsBuild {
-    INCLUDEPATH += $$BASEDIR/libs/lib/sdl2/msvc/include
-    contains(QT_ARCH, i386) {
-        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x86/include
-        LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86
-        LIBS += -L$$BASEDIR/libs/OpenSSL/Windows/x86/lib
-    } else {
-        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x64/include
-        LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x64
-        LIBS += -L$$BASEDIR/libs/OpenSSL/Windows/x64/lib
-    }
-    LIBS += \
-        -lSDL2main \
-        -lSDL2
+    INCLUDEPATH += $$SOURCE_DIR/libs/sdl2/msvc/include
+    INCLUDEPATH += $$SOURCE_DIR/libs/OpenSSL/Windows/x64/include
+    LIBS += -L$$SOURCE_DIR/libs/sdl2/msvc/lib/x64
+    LIBS += -lSDL2
 }
 
-# Include Android OpenSSL libs in order to make Qt OpenSSL support work
+# Include Android OpenSSL libs
 AndroidBuild {
-    equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libcrypto.so
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libssl.so
-    } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
-        # Haven't figured out how to get 64 bit arm OpenSLL yet. This means things like terrain queries will not qork.
-    } else:equals(ANDROID_TARGET_ARCH, x86)  {
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libcrypto.so
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libssl.so
-    } else {
-        error("Unsupported Android architecture: $${ANDROID_TARGET_ARCH}")
-    }
+    include($$SOURCE_DIR/libs/OpenSSL/android_openssl/openssl.pri)
+    message("ANDROID_EXTRA_LIBS")
+    message($$ANDROID_TARGET_ARCH)
+    message($$ANDROID_EXTRA_LIBS)
 }
 
 # Pairing
 contains(DEFINES, QGC_ENABLE_PAIRING) {
     MacBuild {
         #- Pairing is generally not supported on macOS. This is here solely for development.
-        exists(/usr/local/Cellar/openssl/1.0.2s/include) {
-            INCLUDEPATH += /usr/local/Cellar/openssl/1.0.2s/include
-            LIBS += -L/usr/local/Cellar/openssl/1.0.2s/lib
-            LIBS += -lcrypto -lz
+        exists(/usr/local/Cellar/openssl/1.0.2t/include) {
+            INCLUDEPATH += /usr/local/Cellar/openssl/1.0.2t/include
+            LIBS += -L/usr/local/Cellar/openssl/1.0.2t/lib
+            LIBS += -lcrypto
         } else {
             # There is some circular reference settings going on between QGCExternalLibs.pri and gqgroundcontrol.pro.
             # So this duplicates some of the enable/disable logic which would normally be in qgroundcontrol.pro.
-            DEFINES -= QGC_ENABLE_NFC
             DEFINES -= QGC_ENABLE_PAIRING
         }
     } else:WindowsBuild {
         #- Pairing is not supported on Windows
-        DEFINES -= QGC_ENABLE_NFC
         DEFINES -= QGC_ENABLE_PAIRING
     } else {
-        LIBS += -lcrypto -lz
+        LIBS += -lcrypto
         AndroidBuild {
             contains(QT_ARCH, arm) {
                 LIBS += $$ANDROID_EXTRA_LIBS
-                INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/include
+                INCLUDEPATH += $$SOURCE_DIR/libs/OpenSSL/Android/arch-armeabi-v7a/include
             } else {
                 LIBS += $$ANDROID_EXTRA_LIBS
-                INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-x86/include
+                INCLUDEPATH += $$SOURCE_DIR/libs/OpenSSL/Android/arch-x86/include
             }
         }
     }
@@ -201,26 +220,42 @@ contains (DEFINES, DISABLE_AIRMAP) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_AIRMAP) {
     message("Skipping support for AirMap (manual override from user_config.pri)")
 } else {
-    AIRMAPD_PATH    = $$PWD/libs/airmapd
-    AIRMAP_QT_PATH  = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
-    message('Looking for Airmap in folder "$${AIRMAPD_PATH}", variant: "$$AIRMAP_QT_PATH"')
+    AIRMAP_PLATFORM_SDK_PATH    = $${OUT_PWD}/libs/airmap-platform-sdk
+    AIRMAP_QT_PATH              = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
+    message("Including support for AirMap")
     MacBuild {
-        exists($${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH) {
+        exists("$${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH") {
             message("Including support for AirMap for macOS")
             LIBS += -L$${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH -lairmap-qt
             DEFINES += QGC_AIRMAP_ENABLED
         }
     } else:LinuxBuild {
-        exists($${AIRMAPD_PATH}/linux/$$AIRMAP_QT_PATH) {
-            message("Including support for AirMap for Linux")
-            LIBS += -L$${AIRMAPD_PATH}/linux/$$AIRMAP_QT_PATH -lairmap-qt
-            DEFINES += QGC_AIRMAP_ENABLED
-        }
+        #-- Download and install platform-sdk libs and headers iff they're not already in the build directory
+        AIRMAP_PLATFORM_SDK_URL = "https://github.com/airmap/platform-sdk/releases/download/v1.1/airmap-platform-sdk-1.1.0-Linux.deb"
+        AIRMAP_PLATFORM_SDK_FILENAME = "airmap-platform-sdk.deb"
+        AIRMAP_PLATFORM_SDK_INSTALL_PREFIX = "airmap-platform-sdk"
+
+        airmap_platform_sdk_install.target = $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap
+        airmap_platform_sdk_install.commands = \
+            rm -rf $${AIRMAP_PLATFORM_SDK_PATH} && \
+            mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}" && \
+            mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap" && \
+            wget -q -O "$${OUT_PWD}/$${AIRMAP_PLATFORM_SDK_FILENAME}" "$${AIRMAP_PLATFORM_SDK_URL}" && dpkg -x "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}/" && \
+            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/lib/x86_64-linux-gnu/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/" && \
+            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/" && \
+            rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}" && \
+            rm "$${AIRMAP_PLATFORM_SDK_FILENAME}"
+        airmap_platform_sdk_install.depends =
+        QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
+        PRE_TARGETDEPS += $$airmap_platform_sdk_install.target
+
+        LIBS += -L$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH} -lairmap-qt
+        DEFINES += QGC_AIRMAP_ENABLED
     } else {
         message("Skipping support for Airmap (unsupported platform)")
     }
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
         INCLUDEPATH += \
-            $${AIRMAPD_PATH}/include
+            $${AIRMAP_PLATFORM_SDK_PATH}/include
     }
 }

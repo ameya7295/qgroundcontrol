@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -35,7 +35,7 @@ SetupPage {
 
             QGCPalette { id: palette; colorGroupEnabled: true }
 
-            property bool _oldFW:               !(activeVehicle.firmwareMajorVersion > 3 || activeVehicle.firmwareMinorVersion > 5 || activeVehicle.firmwarePatchVersion >= 2)
+            property bool _oldFW:               !(globals.activeVehicle.firmwareMajorVersion > 3 || globals.activeVehicle.firmwareMinorVersion > 5 || globals.activeVehicle.firmwarePatchVersion >= 2)
 
             property Fact _mountRetractX:       controller.getParameterFact(-1, "MNT_RETRACT_X")
             property Fact _mountRetractY:       controller.getParameterFact(-1, "MNT_RETRACT_Y")

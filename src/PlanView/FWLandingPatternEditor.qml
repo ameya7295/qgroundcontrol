@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -52,19 +52,25 @@ Rectangle {
         visible:            !editorColumnNeedLandingPoint.visible
 
         SectionHeader {
-            id:             loiterPointSection
+            id:             finalApproachSection
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("Loiter point")
+            text:           qsTr("Final approach")
         }
 
         Column {
             anchors.left:       parent.left
             anchors.right:      parent.right
             spacing:            _margin
-            visible:            loiterPointSection.checked
+            visible:            finalApproachSection.checked
 
             Item { width: 1; height: _spacer }
+
+            FactCheckBox {
+                text:       qsTr("Use loiter to altitude")
+                fact:       missionItem.useLoiterToAlt
+                visible:    missionItem.useLoiterToAlt.visible
+            }
 
             GridLayout {
                 anchors.left:    parent.left
@@ -75,30 +81,34 @@ Rectangle {
 
                 AltitudeFactTextField {
                     Layout.fillWidth:   true
-                    fact:               missionItem.loiterAltitude
+                    fact:               missionItem.finalApproachAltitude
                     altitudeMode:       _altitudeMode
                 }
 
-                QGCLabel { text: qsTr("Radius") }
+                QGCLabel {
+                    text:       qsTr("Radius")
+                    visible:    missionItem.useLoiterToAlt.rawValue
+                }
 
                 FactTextField {
                     Layout.fillWidth:   true
                     fact:               missionItem.loiterRadius
+                    visible:            missionItem.useLoiterToAlt.rawValue
                 }
             }
 
             Item { width: 1; height: _spacer }
 
-            QGCCheckBox {
-                text:           qsTr("Loiter clockwise")
-                checked:        missionItem.loiterClockwise
-                onClicked:      missionItem.loiterClockwise = checked
+            FactCheckBox {
+                text:       qsTr("Loiter clockwise")
+                fact:       missionItem.loiterClockwise
+                visible:    missionItem.useLoiterToAlt.rawValue
             }
 
             QGCButton {
                 text:       _setToVehicleHeadingStr
-                visible:    activeVehicle
-                onClicked:  missionItem.landingHeading.rawValue = activeVehicle.heading.rawValue
+                visible:    globals.activeVehicle
+                onClicked:  missionItem.landingHeading.rawValue = globals.activeVehicle.heading.rawValue
             }
         }
 
@@ -139,7 +149,7 @@ Rectangle {
 
                 QGCRadioButton {
                     id:                 specifyLandingDistance
-                    text:               qsTr("Landing Dist")
+                    text:               qsTr("Distance")
                     checked:            missionItem.valueSetIsDistance.rawValue
                     onClicked:          missionItem.valueSetIsDistance.rawValue = checked
                     Layout.fillWidth:   true
@@ -167,9 +177,9 @@ Rectangle {
 
                 QGCButton {
                     text:               _setToVehicleLocationStr
-                    visible:            activeVehicle
+                    visible:            globals.activeVehicle
                     Layout.columnSpan:  2
-                    onClicked:          missionItem.landingCoordinate = activeVehicle.coordinate
+                    onClicked:          missionItem.landingCoordinate = globals.activeVehicle.coordinate
                 }
             }
         }
@@ -178,7 +188,7 @@ Rectangle {
 
         QGCCheckBox {
             anchors.right:  parent.right
-            text:           qsTr("Altitudes relative to home")
+            text:           qsTr("Altitudes relative to launch")
             checked:        missionItem.altitudesAreRelative
             visible:        QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || !missionItem.altitudesAreRelative
             onClicked:      missionItem.altitudesAreRelative = checked
@@ -215,14 +225,37 @@ Rectangle {
             }
         }
 
-        QGCLabel {
-            anchors.left:           parent.left
-            anchors.right:          parent.right
-            wrapMode:               Text.WordWrap
-            color:                  qgcPal.warningText
-            font.pointSize:         ScreenTools.smallFontPointSize
-            horizontalAlignment:    Text.AlignHCenter
-            text:                   qsTr("* Glide slope altitudes are approximate. Actual flight path will vary due to environmental conditions and vehicle settings.")
+        Column {
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            spacing:            0
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                wrapMode:               Text.WordWrap
+                color:                  qgcPal.warningText
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   qsTr("* Approximate glide slope altitudes.")
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                wrapMode:               Text.WordWrap
+                color:                  qgcPal.warningText
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   qsTr("* Actual flight path will vary.")
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                wrapMode:               Text.WordWrap
+                color:                  qgcPal.warningText
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   qsTr("* Avoid tailwind on landing.")
+            }
         }
     }
 
@@ -255,17 +288,18 @@ Rectangle {
                 anchors.right:          parent.right
                 horizontalAlignment:    Text.AlignHCenter
                 text:                   qsTr("- or -")
-                visible:                activeVehicle
+                visible:                globals.activeVehicle
             }
 
             QGCButton {
                 anchors.horizontalCenter:   parent.horizontalCenter
                 text:                       _setToVehicleLocationStr
-                visible:                    activeVehicle
+                visible:                    globals.activeVehicle
 
                 onClicked: {
-                    missionItem.landingCoordinate = activeVehicle.coordinate
-                    missionItem.landingHeading.rawValue = activeVehicle.heading.rawValue
+                    missionItem.landingCoordinate = globals.activeVehicle.coordinate
+                    missionItem.landingHeading.rawValue = globals.activeVehicle.heading.rawValue
+                    missionItem.setLandingHeadingToTakeoffHeading()
                 }
             }
         }
@@ -289,12 +323,11 @@ Rectangle {
             }
 
             QGCButton {
-                text:               qsTr("Done Adjusting")
+                text:               qsTr("Done")
                 Layout.fillWidth:   true
                 onClicked: {
                     missionItem.wizardMode = false
                     missionItem.landingDragAngleOnly = false
-                    editorRoot.selectNextNotReadyItem()
                 }
             }
         }

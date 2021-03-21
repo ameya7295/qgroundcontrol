@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -121,8 +121,8 @@ public:
     Q_PROPERTY(bool         downloadingLogs READ downloadingLogs    NOTIFY downloadingLogsChanged)
 
     QGCLogModel*    model                   () { return &_logEntriesModel; }
-    bool            requestingList          () { return _requestingLogEntries; }
-    bool            downloadingLogs         () { return _downloadingLogs; }
+    bool            requestingList          () const{ return _requestingLogEntries; }
+    bool            downloadingLogs         () const{ return _downloadingLogs; }
 
     Q_INVOKABLE void refresh                ();
     Q_INVOKABLE void download               (QString path = QString());
@@ -144,7 +144,6 @@ private slots:
     void _processDownload   ();
 
 private:
-
     bool _entriesComplete   ();
     bool _chunkComplete     () const;
     bool _logComplete       () const;
@@ -154,10 +153,11 @@ private:
     void _resetSelection    (bool canceled = false);
     void _findMissingData   ();
     void _requestLogList    (uint32_t start, uint32_t end);
-    void _requestLogData    (uint16_t id, uint32_t offset = 0, uint32_t count = 0xFFFFFFFF);
+    void _requestLogData    (uint16_t id, uint32_t offset, uint32_t count, int retryCount = 0);
     bool _prepareLogDownload();
     void _setDownloading    (bool active);
     void _setListing        (bool active);
+    void _updateDataRate    ();
 
     QGCLogEntry* _getNextSelected();
 

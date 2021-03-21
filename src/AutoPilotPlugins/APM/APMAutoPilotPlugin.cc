@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -53,7 +53,10 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _tuningComponent          (nullptr)
     , _esp8266Component         (nullptr)
     , _heliComponent            (nullptr)
+#if 0
+    // Follow me not ready for Stable
     , _followComponent          (nullptr)
+#endif
 {
 #if !defined(NO_SERIAL_LINK) && !defined(__android__)
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &APMAutoPilotPlugin::_checkForBadCubeBlack);
@@ -104,12 +107,16 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
 
+#if 0
+    // Follow me not ready for Stable
+
             if ((qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) || qobject_cast<ArduRoverFirmwarePlugin*>(_vehicle->firmwarePlugin())) &&
                     _vehicle->parameterManager()->parameterExists(-1, QStringLiteral("FOLL_ENABLE"))) {
                 _followComponent = new APMFollowComponent(_vehicle, this);
                 _followComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_followComponent));
             }
+#endif
 
             if (_vehicle->vehicleType() == MAV_TYPE_HELICOPTER && (_vehicle->versionCompare(4, 0, 0) >= 0)) {
                 _heliComponent = new APMHeliComponent(_vehicle, this);
@@ -191,6 +198,8 @@ QString APMAutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
 void APMAutoPilotPlugin::_checkForBadCubeBlack(void)
 {
     bool cubeBlackFound = false;
+#if 0
+    // FIXME: Put back
     for (const QVariant& varLink: _vehicle->links()) {
         SerialLink* serialLink = varLink.value<SerialLink*>();
         if (serialLink && QSerialPortInfo(*serialLink->_hackAccessToPort()).description().contains(QStringLiteral("CubeBlack"))) {
@@ -198,6 +207,7 @@ void APMAutoPilotPlugin::_checkForBadCubeBlack(void)
         }
 
     }
+#endif
     if (!cubeBlackFound) {
         return;
     }
@@ -211,7 +221,7 @@ void APMAutoPilotPlugin::_checkForBadCubeBlack(void)
     if (paramMgr->parameterExists(-1, paramAcc3) && paramMgr->getParameter(-1, paramAcc3)->rawValue().toInt() == 0 &&
             paramMgr->parameterExists(-1, paramGyr3) && paramMgr->getParameter(-1, paramGyr3)->rawValue().toInt() == 0 &&
             paramMgr->parameterExists(-1, paramEnableMask) && paramMgr->getParameter(-1, paramEnableMask)->rawValue().toInt() >= 7) {
-        qgcApp()->showMessage(tr("WARNING: The flight board you are using has a critical service bulletin against it which advises against flying. For details see: https://discuss.cubepilot.org/t/sb-0000002-critical-service-bulletin-for-cubes-purchased-between-january-2019-to-present-do-not-fly/406"));
+        qgcApp()->showAppMessage(tr("WARNING: The flight board you are using has a critical service bulletin against it which advises against flying. For details see: https://discuss.cubepilot.org/t/sb-0000002-critical-service-bulletin-for-cubes-purchased-between-january-2019-to-present-do-not-fly/406"));
 
     }
 }
